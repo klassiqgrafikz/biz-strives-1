@@ -1,0 +1,78 @@
+<%- include('layout', { title: 'Dashboard', userId: userId, body: '' }) %>
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <span class="text-sm text-gray-500">Welcome, <%= username %></span>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+      <p class="text-sm font-medium text-gray-500">Total Received</p>
+      <p class="text-3xl font-bold text-gray-800 mt-1"><%= fmtNaira(income) %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+      <p class="text-sm font-medium text-gray-500">Total Spent</p>
+      <p class="text-3xl font-bold text-gray-800 mt-1"><%= fmtNaira(expenses) %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+      <p class="text-sm font-medium text-gray-500">Saved This Month</p>
+      <p class="text-3xl font-bold text-gray-800 mt-1"><%= fmtNaira(savings) %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+      <p class="text-sm font-medium text-gray-500">Net Cash Flow</p>
+      <p class="text-3xl font-bold <%= net >= 0 ? 'text-green-600' : 'text-red-600' %> mt-1"><%= fmtNaira(net) %></p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Recent Payments</h2>
+        <a href="/payments" class="text-sm text-blue-600 hover:underline">View all</a>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <% if (recentPayments.length === 0) { %>
+          <div class="p-4 text-center text-gray-500">No payments yet</div>
+        <% } else { %>
+          <% recentPayments.forEach(p => { %>
+            <div class="p-4 flex items-center justify-between">
+              <div>
+                <p class="font-medium"><%= p.customer_name %></p>
+                <p class="text-sm text-gray-500"><%= p.received_at.split('T')[0] %> · <%= p.method %><%= p.note ? ' · ' + p.note : '' %></p>
+              </div>
+              <span class="text-green-600 font-semibold"><%= fmtNaira(p.amount_cents) %></span>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Recent Expenses</h2>
+        <a href="/expenses" class="text-sm text-blue-600 hover:underline">View all</a>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <% if (recentExpenses.length === 0) { %>
+          <div class="p-4 text-center text-gray-500">No expenses yet</div>
+        <% } else { %>
+          <% recentExpenses.forEach(e => { %>
+            <div class="p-4 flex items-center justify-between">
+              <div>
+                <p class="font-medium"><%= e.category %></p>
+                <p class="text-sm text-gray-500"><%= e.spent_at.split('T')[0] %><%= e.description ? ' · ' + e.description : '' %></p>
+              </div>
+              <span class="text-red-600 font-semibold"><%= fmtNaira(e.amount_cents) %></span>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-4">
+    <h2 class="text-lg font-semibold mb-3">Savings Pot Balance</h2>
+    <p class="text-2xl font-bold text-blue-600"><%= fmtNaira(savingsBalance) %></p>
+    <a href="/savings" class="text-sm text-blue-600 hover:underline inline-block mt-2">Manage savings</a>
+  </div>
+</div>

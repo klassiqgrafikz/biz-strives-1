@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || (settings && settings.brand_name ? settings.brand_name : 'BizStrives') %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <a href="/dashboard" class="text-xl font-bold text-blue-600"><%= settings && settings.brand_name ? settings.brand_name : 'BizStrives' %></a>
+        </div>
+        <% if (userId) { %>
+        <div class="flex items-center space-x-4">
+          <a href="/dashboard" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">📊 Dashboard</a>
+          <a href="/customers" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">👥 Customers</a>
+          <a href="/payments" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">💰 Payments</a>
+          <a href="/expenses" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">💸 Expenses</a>
+          <a href="/savings" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">🏦 Savings</a>
+          <a href="/reports" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">📄 Reports</a>
+          <a href="/messages" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">✉️ Messages</a>
+          <a href="/settings" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">⚙️ Settings</a>
+          <a href="/logout" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">🚪 Logout</a>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <%- body %>
+  </main>
+
+  <footer class="bg-white border-t border-gray-200 py-4">
+    <div class="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
+      © <%= new Date().getFullYear() %> <%= settings && settings.business_name ? settings.business_name : 'BizStrives' %>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

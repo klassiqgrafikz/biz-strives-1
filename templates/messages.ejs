@@ -1,0 +1,114 @@
+<%- include('layout', { title: 'Messages', userId: userId, body: '' }) %>
+<div class="space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800">Messaging Center</h1>
+  
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Message Templates</h2>
+        <button onclick="document.getElementById('editTemplateModal').classList.remove('hidden')" class="text-sm text-blue-600 hover:underline">Edit Templates</button>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <% templates.forEach(t => { %>
+        <div class="p-4">
+          <h3 class="font-medium"><%= t.name %></h3>
+          <p class="text-sm text-gray-500 mb-2"><%= t.subject %></p>
+          <button data-tpl='<%- JSON.stringify(t) %>' onclick="openEditModal(this)" class="text-sm text-blue-600 hover:underline mb-2">Edit</button>
+          <form method="POST" action="/messages/templates/<%= t.id %>/delete" onsubmit="return confirm('Delete template?')" class="inline">
+            <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
+          </form>
+        </div>
+        <% }) %>
+        <% if (templates.length === 0) { %>
+          <div class="p-4 text-center text-gray-500">
+            <p>No message templates configured.</p>
+            <button onclick="document.getElementById('editTemplateModal').classList.remove('hidden')" class="text-blue-600 hover:underline mt-2">Create your first template</button>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold">Action Buttons</h2>
+      </div>
+      <div class="p-4 space-y-3">
+        <form method="POST" action="/admin/run-birthday">
+          <button type="submit" class="w-full bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700">Send Birthday Messages Now</button>
+        </form>
+        <form method="POST" action="/admin/run-monthly">
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Run Month-End Now</button>
+        </form>
+        <a href="/reports/pdf" class="block text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">Download Statement PDF</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="p-4 border-b border-gray-200">
+      <h2 class="text-lg font-semibold">Recent Messages</h2>
+    </div>
+    <div class="divide-y divide-gray-100">
+      <% if (log.length === 0) { %>
+        <div class="p-4 text-center text-gray-500">No messages sent yet</div>
+      <% } else { %>
+        <% log.slice(0,20).forEach(m => { %>
+          <div class="p-4 flex items-center justify-between">
+            <div>
+              <span class="font-medium"><%= m.type.replace('_', ' ').toUpperCase() %></span>
+              <span class="text-gray-500 text-sm"> (<%= m.customer_name || 'System' %>)</span>
+            </div>
+            <span class="text-xs text-gray-500"><%= m.sent_at.split('T')[0] + ' ' + m.sent_at.split('T')[1].slice(0,8) %></span>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div id="editTemplateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] flex flex-col">
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Edit Template</h2>
+      <button onclick="document.getElementById('editTemplateModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700">×</button>
+    </div>
+    <form method="POST" action="/messages/templates" class="p-4 space-y-4 overflow-y-auto">
+      <input type="hidden" name="id" id="editId">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+        <input type="text" name="name" id="editName" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+        <input type="text" name="subject" id="editSubject" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Message Body</label>
+        <textarea name="body" id="editBody" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"></textarea>
+        <div class="mt-2">
+          <p class="text-xs text-gray-500">Placeholders available:</p>
+          <div class="text-xs text-gray-500">{name}, {month}, {brand}, {amount}, {total_received}, {total_spent}, {net_cash}</div>
+        </div>
+      </div>
+      <input type="hidden" name="type" value="monthly">
+      <div class="flex justify-end pt-2">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Template</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditModal(btn) {
+  try {
+    const data = JSON.parse(btn.dataset.tpl);
+    document.getElementById('editId').value = data.id;
+    document.getElementById('editName').value = data.name;
+    document.getElementById('editSubject').value = data.subject;
+    document.getElementById('editBody').value = data.body;
+    document.getElementById('editTemplateModal').classList.remove('hidden');
+  } catch(e) {
+    console.error('Failed to open edit modal:', e);
+  }
+}
+</script>
