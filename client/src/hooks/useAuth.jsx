@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
     }
     try {
       const res = await api.get('/auth/me')
-      setUser(res.data)
+      setUser(res.user)
     } catch {
       setUser(null)
     } finally {
@@ -38,16 +38,16 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     const res = await api.post('/auth/login', { username, password })
-    api.setToken(res.data.token)
-    setUser(res.data.user)
-    return res.data
+    api.setToken(res.token)
+    setUser(res.user)
+    return res
   }
 
   const register = async (username, password) => {
     const res = await api.post('/auth/register', { username, password })
-    api.setToken(res.data.token)
-    setUser(res.data.user)
-    return res.data
+    api.setToken(res.token)
+    setUser(res.user)
+    return res
   }
 
   const logout = () => {
