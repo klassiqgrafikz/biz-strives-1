@@ -4,10 +4,10 @@ const { Pool } = pg
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: { rejectUnauthorized: false },
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 15000,
 })
 
 pool.on('error', (err) => {
@@ -34,7 +34,9 @@ export async function queryAll(text, params) {
 
 // Helper: run insert and return inserted row
 export async function queryInsert(text, params) {
-  const res = await pool.query(text + ' RETURNING *', params)
+  const hasReturning = /\bRETURNING\b/i.test(text)
+  const sql = hasReturning ? text : text + ' RETURNING *'
+  const res = await pool.query(sql, params)
   return res.rows[0]
 }
 
