@@ -59,8 +59,8 @@ echo "VITE_API_URL=http://localhost:3001" > client/.env
 ### 3. Install & Run Locally
 
 ```bash
-# Install all dependencies
-npm install
+# Install all dependencies (client + server)
+npm run install:all
 
 # Initialize database (run once)
 npm run init-db
@@ -84,10 +84,20 @@ npm run dev
 
 ### Frontend (Netlify / Vercel / Appwrite Sites / GitHub Pages)
 
+**Netlify / Vercel / GitHub Pages:**
 1. Connect your GitHub repo
-2. Build command: `npm run build` (runs in `client/`)
-3. Publish directory: `client/dist`
-4. Environment variable: `VITE_API_URL=https://your-api-domain.com`
+2. Root directory: `client/`
+3. Build command: `npm run build`
+4. Publish directory: `dist`
+5. Environment variable: `VITE_API_URL=https://your-api-domain.com`
+
+**Appwrite Sites** (working directory is already `client/`):
+1. Connect your GitHub repo, branch `master`
+2. Framework: **Other** (manual static config)
+3. Install command: `npm install`
+4. Build command: `npm run build`
+5. Output directory: `dist`
+6. Environment variable: `VITE_API_URL=https://your-api-domain.com`
 
 ### Backend (Render / Railway / Fly.io / VPS)
 
