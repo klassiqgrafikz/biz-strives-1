@@ -26,9 +26,9 @@ router.get('/', async (req, res) => {
 
     const [payments, expenses, savings] = await Promise.all([
       queryAll(
-        `SELECT p.*, c.name as customer_name
+        `SELECT p.*, COALESCE(c.name, 'Manual') as customer_name
          FROM payments p
-         JOIN customers c ON p.customer_id = c.id
+         LEFT JOIN customers c ON p.customer_id = c.id
          WHERE p.received_at BETWEEN $1 AND $2
          ORDER BY p.received_at`,
         [start.toISOString(), end.toISOString()]
@@ -74,9 +74,9 @@ router.get('/pdf', async (req, res) => {
 
     const [payments, expenses, savings] = await Promise.all([
       queryAll(
-        `SELECT p.*, c.name as customer_name
+        `SELECT p.*, COALESCE(c.name, 'Manual') as customer_name
          FROM payments p
-         JOIN customers c ON p.customer_id = c.id
+         LEFT JOIN customers c ON p.customer_id = c.id
          WHERE p.received_at BETWEEN $1 AND $2 ORDER BY p.received_at`,
         [start.toISOString(), end.toISOString()]
       ),

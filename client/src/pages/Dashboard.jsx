@@ -10,26 +10,49 @@ export default function Dashboard() {
   const [recentExpenses, setRecentExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [incomeForm, setIncomeForm] = useState({ amount: '', note: '' })
+  const [incomeSaving, setIncomeSaving] = useState(false)
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [stats, payments, expenses] = await Promise.all([
-          api.get('/dashboard'),
-          api.get('/payments?limit=5'),
-          api.get('/expenses?limit=5')
-        ])
-        setData(stats.data)
-        setRecentPayments(payments.data)
-        setRecentExpenses(expenses.data)
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
+    loadData()
   }, [])
+
+  async function loadData() {
+    try {
+      const [stats, payments, expenses] = await Promise.all([
+        api.get('/dashboard'),
+        api.get('/payments?limit=5'),
+        api.get('/expenses?limit=5')
+      ])
+      setData(stats.data)
+      setRecentPayments(payments.data)
+      setRecentExpenses(expenses.data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const recordIncome = async (e) => {
+    e.preventDefault()
+    const amount = parseFloat(incomeForm.amount)
+    if (!amount || amount <= 0) {
+      alert('Enter a valid amount')
+      return
+    }
+    setIncomeSaving(true)
+    try {
+      await api.post('/payments/income', { amount, note: incomeForm.note })
+      setIncomeForm({ amount: '', note: '' })
+      setLoading(true)
+      await loadData()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setIncomeSaving(false)
+    }
+  }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
   if (error) return <div className="text-red-600 p-4">Error: {error}</div>
@@ -38,6 +61,36 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-5">
+        <h2 className="text-lg font-semibold mb-3">Record Payday Income</h2>
+        <form onSubmit={recordIncome} className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              placeholder="Amount (₦)"
+              value={incomeForm.amount}
+              onChange={e => setIncomeForm({ ...incomeForm, amount: e.target.value })}
+              className="input w-full"
+            />
+          </div>
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Note (e.g. Salary 02 Sep)" 
+              value={incomeForm.note}
+              onChange={e => setIncomeForm({ ...incomeForm, note: e.target.value })}
+              className="input w-full"
+            />
+          </div>
+          <button type="submit" disabled={incomeSaving} className="btn btn-green disabled:opacity-50">
+            {incomeSaving ? 'Saving...' : 'Add Income'}
+          </button>
+        </form>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

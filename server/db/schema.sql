@@ -49,7 +49,8 @@ CREATE INDEX IF NOT EXISTS idx_customers_birthday ON customers(birthday);
 -- Payments (income)
 CREATE TABLE IF NOT EXISTS payments (
     id BIGSERIAL PRIMARY KEY,
-    customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    customer_id BIGINT REFERENCES customers(id) ON DELETE SET NULL,
+    source TEXT DEFAULT 'customer', -- 'customer' or 'manual' (payday)
     amount_cents BIGINT NOT NULL,
     method TEXT DEFAULT 'bank_transfer',
     note TEXT,

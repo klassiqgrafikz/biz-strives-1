@@ -11,9 +11,9 @@ router.get('/', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 100
     const payments = await queryAll(
-      `SELECT p.*, c.name as customer_name
+      `SELECT p.*, COALESCE(c.name, 'Manual') as customer_name
        FROM payments p
-       JOIN customers c ON p.customer_id = c.id
+       LEFT JOIN customers c ON p.customer_id = c.id
        ORDER BY p.received_at DESC
        LIMIT $1`,
       [limit]
@@ -25,13 +25,32 @@ router.get('/', async (req, res) => {
   }
 })
 
+// POST /api/payments/income - manual income (payday), no customer
+router.post('/income', async (req, res) => {
+  try {
+    const { amount, note, received_at } = req.body
+    const cents = Math.round(parseFloat(amount) * 100)
+    if (!cents) {
+      return res.status(400).json({ error: 'Amount required' })
+    }
+    const payment = await queryInsert(
+      'INSERT INTO payments (customer_id, source, amount_cents, method, note, received_at) VALUES (NULL, $1, $2, $3, $4, $5) RETURNING *',
+      ['manual', cents, 'manual', note || 'Payday income', received_at ? new Date(received_at).toISOString() : new Date().toISOString()]
+    )
+    res.json({ data: payment })
+  } catch (err) {
+    console.error('POST /payments/income error:', err)
+    res.status(500).json({ error: 'Failed to record income' })
+  }
+})
+
 // GET /api/payments/:id
 router.get('/:id', async (req, res) => {
   try {
     const payment = await queryOne(
-      `SELECT p.*, c.name as customer_name
+      `SELECT p.*, COALESCE(c.name, 'Manual') as customer_name
        FROM payments p
-       JOIN customers c ON p.customer_id = c.id
+       LEFT JOIN customers c ON p.customer_id = c.id
        WHERE p.id = $1`,
       [req.params.id]
     )
@@ -52,8 +71,8 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Customer and amount required' })
     }
     const payment = await queryInsert(
-      'INSERT INTO payments (customer_id, amount_cents, method, note) VALUES ($1, $2, $3, $4) RETURNING *',
-      [customer_id, cents, method || 'bank_transfer', note || null]
+      'INSERT INTO payments (customer_id, source, amount_cents, method, note) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [customer_id, 'customer', cents, method || 'bank_transfer', note || null]
     )
     res.json({ data: payment })
   } catch (err) {

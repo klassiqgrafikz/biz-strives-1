@@ -8,7 +8,6 @@ export default function Messages() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name: '', subject: '', body: '', type: 'monthly' })
-  const [running, setRunning] = useState({ birthday: false, monthly: false })
   const [loading, setLoading] = useState(true)
 
   const downloadPDF = async () => {
@@ -93,30 +92,6 @@ export default function Messages() {
     }
   }
 
-  const runBirthday = async () => {
-    setRunning({...running, birthday: true})
-    try {
-      await api.post('/admin/run-birthday')
-      loadLog()
-    } catch (err) {
-      alert(err.message)
-    } finally {
-      setRunning({...running, birthday: false})
-    }
-  }
-
-  const runMonthly = async () => {
-    setRunning({...running, monthly: true})
-    try {
-      await api.post('/admin/run-monthly')
-      loadLog()
-    } catch (err) {
-      alert(err.message)
-    } finally {
-      setRunning({...running, monthly: false})
-    }
-  }
-
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
 
   return (
@@ -154,18 +129,33 @@ export default function Messages() {
 
         <div className="bg-white rounded-lg shadow">
           <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">Actions</h2>
+            <h2 className="text-lg font-semibold">Automation Schedule</h2>
           </div>
           <div className="p-4 space-y-3">
-            <button onClick={runBirthday} disabled={running.birthday} className="w-full bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700 disabled:opacity-50">
-              {running.birthday ? 'Sending...' : 'Send Birthday Messages Now'}
-            </button>
-            <button onClick={runMonthly} disabled={running.monthly} className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50">
-              {running.monthly ? 'Running...' : 'Run Month-End Now'}
-            </button>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="font-medium text-blue-800">Monthly Statement</p>
+              <p className="text-sm text-blue-700 mt-1">
+                Emailed to your statement email on the last day of each month at 9pm, along with the monthly template to all active customers.
+              </p>
+            </div>
+            <div className="bg-pink-50 border border-pink-200 rounded-md p-3">
+              <p className="font-medium text-pink-800">Birthday Messages</p>
+              <p className="text-sm text-pink-700 mt-1">
+                Sent daily at 8am to customers whose birthday is today, using the Birthday template.
+              </p>
+            </div>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <p className="font-medium text-yellow-800">Savings Reminder</p>
+              <p className="text-sm text-yellow-700 mt-1">
+                Emailed every Friday at 6pm if no savings were recorded that week.
+              </p>
+            </div>
             <a href="#" onClick={e => { e.preventDefault(); downloadPDF() }} className="block text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">
-              Download Statement PDF
+              Download Current PDF Statement
             </a>
+            <p className="text-xs text-gray-500">
+              Templates are used automatically. Edit them below to customize what is sent.
+            </p>
           </div>
         </div>
       </div>

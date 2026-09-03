@@ -27,9 +27,9 @@ router.get('/', async (req, res) => {
       queryOne('SELECT COALESCE(SUM(amount_cents),0) as total FROM savings WHERE saved_at BETWEEN $1 AND $2', [start.toISOString(), end.toISOString()]),
       queryOne('SELECT COALESCE(SUM(amount_cents),0) as total FROM savings'),
       queryAll(
-        `SELECT p.*, c.name as customer_name
+        `SELECT p.*, COALESCE(c.name, 'Manual') as customer_name
          FROM payments p
-         JOIN customers c ON p.customer_id = c.id
+         LEFT JOIN customers c ON p.customer_id = c.id
          ORDER BY p.received_at DESC LIMIT 5`
       ),
       queryAll('SELECT * FROM expenses ORDER BY spent_at DESC LIMIT 5')

@@ -112,6 +112,11 @@ export default function Settings() {
                 <p className="text-xs text-gray-500 mt-1">Last day of month at this time</p>
               </div>
             </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-sm text-blue-800">
+                <span className="font-medium">Automated emails:</span> monthly statement (income − expenses) is sent to your Statement Email on the last day of each month, and a savings reminder is sent every Friday if no savings were recorded that week. Set your Gmail details above to enable these.
+              </p>
+            </div>
           </div>
         </div>
 
