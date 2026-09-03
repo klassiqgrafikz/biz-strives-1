@@ -63,6 +63,17 @@ const server = app.listen(PORT, async () => {
   await runCatchUp()
   scheduleJobs()
   console.log(`Server running at http://localhost:${PORT}`)
+
+  // Keep-alive ping to prevent Supabase/Render from sleeping (every 6 hours)
+  setInterval(async () => {
+    try {
+      const { queryOne } = await import('./db/pool.js')
+      await queryOne('SELECT 1')
+      console.log('[KEEP-ALIVE] Database ping successful')
+    } catch (err) {
+      console.error('[KEEP-ALIVE] Database ping failed:', err.message)
+    }
+  }, 6 * 60 * 60 * 1000) // 6 hours
 })
 
 export default app

@@ -11,6 +11,28 @@ export default function Messages() {
   const [running, setRunning] = useState({ birthday: false, monthly: false })
   const [loading, setLoading] = useState(true)
 
+  const downloadPDF = async () => {
+    try {
+      const token = localStorage.getItem('bizstrives_token')
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/reports/pdf`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to download PDF')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `statement-${new Date().toISOString().slice(0,7)}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to download PDF')
+    }
+  }
+
   useEffect(() => {
     Promise.all([loadTemplates(), loadLog()]).finally(() => setLoading(false))
   }, [])
@@ -93,10 +115,6 @@ export default function Messages() {
     } finally {
       setRunning({...running, monthly: false})
     }
-  }
-
-  const downloadPDF = () => {
-    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/reports/pdf`, '_blank')
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>

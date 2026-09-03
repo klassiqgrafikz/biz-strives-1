@@ -31,8 +31,7 @@ async function request(path, options = {}) {
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers,
-    credentials: 'include'
+    headers
   })
 
   if (res.status === 401) {

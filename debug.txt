@@ -1,0 +1,18 @@
+[17:46:10] [open-runtimes] Build cache miss. 
+[17:46:10] [open-runtimes] Environment preparation started. 
+[17:46:10] [open-runtimes] Environment preparation finished. 
+[17:46:10] [open-runtimes] Build command execution started. 
+npm warn Unknown env config "store-dir". This will error in a future major version of npm. See `npm help npmrc` for supported config options.
+added 29 packages, and audited 30 packages in 4s
+7 packages are looking for funding
+  run `npm fund` for details
+found 0 vulnerabilities
+npm warn Unknown env config "store-dir". This will error in a future major version of npm. See `npm help npmrc` for supported config options.
+npm notice run biz-strives@1.0.0 build
+npm notice run npm run build --prefix client
+npm warn Unknown env config "store-dir". This will error in a future major version of npm. See `npm help npmrc` for supported config options.
+npm notice run biz-strives-client@1.0.0 build
+npm notice run vite build
+sh: vite: not found
+
+Build failed with exit code 127.

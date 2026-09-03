@@ -26,8 +26,26 @@ export default function Reports() {
     }
   }
 
-  const downloadPDF = () => {
-    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/reports/pdf?month=${selectedMonth}`, '_blank')
+  const downloadPDF = async () => {
+    try {
+      const token = localStorage.getItem('bizstrives_token')
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/reports/pdf?month=${selectedMonth}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to download PDF')
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `statement-${selectedMonth}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to download PDF')
+    }
   }
 
   const monthLabel = `${months[parseInt(selectedMonth.slice(5)) - 1]} ${selectedMonth.slice(0,4)}`
