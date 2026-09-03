@@ -1,0 +1,100 @@
+import { useState, useEffect } from 'react'
+import { api } from '../lib/api'
+import StatCard from '../components/StatCard'
+
+const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+export default function Dashboard() {
+  const [data, setData] = useState({ income: 0, expenses: 0, savings: 0, net: 0, savingsBalance: 0 })
+  const [recentPayments, setRecentPayments] = useState([])
+  const [recentExpenses, setRecentExpenses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [stats, payments, expenses] = await Promise.all([
+          api.get('/dashboard'),
+          api.get('/payments?limit=5'),
+          api.get('/expenses?limit=5')
+        ])
+        setData(stats.data)
+        setRecentPayments(payments.data)
+        setRecentExpenses(expenses.data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (error) return <div className="text-red-600 p-4">Error: {error}</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Received" value={fmtNaira(data.income)} color="green" />
+        <StatCard label="Total Spent" value={fmtNaira(data.expenses)} color="red" />
+        <StatCard label="Saved This Month" value={fmtNaira(data.savings)} color="yellow" />
+        <StatCard label="Net Cash Flow" value={fmtNaira(data.net)} color={data.net >= 0 ? 'green' : 'red'} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Payments</h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {recentPayments.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">No payments yet</div>
+            ) : (
+              recentPayments.map(p => (
+                <div key={p.id} className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{p.customer_name}</p>
+                    <p className="text-sm text-gray-500">{new Date(p.received_at).toLocaleDateString()} · {p.method}{p.note ? ' · ' + p.note : ''}</p>
+                  </div>
+                  <span className="text-green-600 font-semibold">{fmtNaira(p.amount_cents)}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Expenses</h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {recentExpenses.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">No expenses yet</div>
+            ) : (
+              recentExpenses.map(e => (
+                <div key={e.id} className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{e.category}</p>
+                    <p className="text-sm text-gray-500">{new Date(e.spent_at).toLocaleDateString()}{e.description ? ' · ' + e.description : ''}</p>
+                  </div>
+                  <span className="text-red-600 font-semibold">{fmtNaira(e.amount_cents)}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-4">
+        <h2 className="text-lg font-semibold mb-3">Savings Pot Balance</h2>
+        <p className="text-2xl font-bold text-blue-600">{fmtNaira(data.savingsBalance)}</p>
+      </div>
+    </div>
+  )
+}
