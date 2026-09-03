@@ -34,24 +34,31 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Health check
-app.use('/api/health', healthRoutes)
+// Mount each router under both /api/* and /* (aliases)
+const routes = [
+  ['/api/health', healthRoutes],
+  ['/api/auth', authRoutes],
+  ['/api/dashboard', dashboardRoutes],
+  ['/api/customers', customerRoutes],
+  ['/api/payments', paymentRoutes],
+  ['/api/expenses', expenseRoutes],
+  ['/api/savings', savingsRoutes],
+  ['/api/reports', reportRoutes],
+  ['/api/templates', templateRoutes],
+  ['/api/settings', settingsRoutes],
+  ['/api/messages', messageRoutes],
+  ['/api/admin', adminRoutes]
+]
 
-// Auth routes (no auth required)
-app.use('/api/auth', authRoutes)
+for (const [path, router] of routes) {
+  app.use(path, router)
+}
 
-// Protected routes
-import { requireAuth } from './routes/auth.js'
-app.use('/api/dashboard', dashboardRoutes)
-app.use('/api/customers', customerRoutes)
-app.use('/api/payments', paymentRoutes)
-app.use('/api/expenses', expenseRoutes)
-app.use('/api/savings', savingsRoutes)
-app.use('/api/reports', reportRoutes)
-app.use('/api/templates', templateRoutes)
-app.use('/api/settings', settingsRoutes)
-app.use('/api/messages', messageRoutes)
-app.use('/api/admin', adminRoutes)
+for (const [path, router] of routes) {
+  if (path !== '/api/health' && path !== '/api/auth') {
+    app.use(path.replace('/api', ''), router)
+  }
+}
 
 // Error handling
 app.use((err, req, res, next) => {
