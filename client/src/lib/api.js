@@ -1,6 +1,11 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 let token = localStorage.getItem('bizstrives_token')
+const listeners = new Set()
+
+function emitAuthChanged() {
+  listeners.forEach((fn) => fn())
+}
 
 export function getToken() {
   return token
@@ -13,11 +18,18 @@ export function setToken(newToken) {
   } else {
     localStorage.removeItem('bizstrives_token')
   }
+  emitAuthChanged()
 }
 
 export function clearToken() {
   token = null
   localStorage.removeItem('bizstrives_token')
+  emitAuthChanged()
+}
+
+export function onAuthChange(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
 }
 
 async function request(path, options = {}) {
@@ -36,7 +48,6 @@ async function request(path, options = {}) {
 
   if (res.status === 401) {
     clearToken()
-    window.location.href = '/login'
     throw new Error('Unauthorized')
   }
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { api } from '../lib/api'
+import { api, onAuthChange } from '../lib/api'
 
 const AuthContext = createContext(null)
 
@@ -8,6 +8,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const fetchUser = useCallback(async () => {
+    if (!api.getToken()) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
     try {
       const res = await api.get('/auth/me')
       setUser(res.data)
@@ -20,6 +25,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     fetchUser()
+    const unsubscribe = onAuthChange(() => {
+      if (!api.getToken()) {
+        setUser(null)
+      } else {
+        setLoading(true)
+        fetchUser()
+      }
+    })
+    return unsubscribe
   }, [fetchUser])
 
   const login = async (username, password) => {
