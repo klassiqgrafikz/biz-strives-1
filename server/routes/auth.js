@@ -70,7 +70,7 @@ router.post('/register', async (req, res) => {
     res.json({ user: { id: user.id, username: user.username }, token })
   } catch (err) {
     console.error('POST /auth/register error:', err)
-    res.status(500).json({ error: 'Registration failed', detail: err.message })
+    res.status(500).json({ error: 'Registration failed' })
   }
 })
 
