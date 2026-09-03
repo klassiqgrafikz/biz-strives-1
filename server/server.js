@@ -54,10 +54,9 @@ for (const [path, router] of routes) {
   app.use(path, router)
 }
 
+// Alias the same routers at the root (no /api prefix) to match client API paths
 for (const [path, router] of routes) {
-  if (path !== '/api/health' && path !== '/api/auth') {
-    app.use(path.replace('/api', ''), router)
-  }
+  app.use(path.replace('/api', ''), router)
 }
 
 // Error handling
