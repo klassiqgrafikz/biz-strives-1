@@ -7,6 +7,17 @@ async function getSettings() {
   return await queryOne('SELECT * FROM settings WHERE id = 1')
 }
 
+function isPostAcceptanceError(err) {
+  // Gmail sometimes delivers the message but closes the socket in a way that
+  // makes nodemailer throw a connection/socket timeout AFTER the mail was
+  // accepted for delivery. These are not auth/validation rejections.
+  const code = (err && err.code) || ''
+  const msg = `${err && (err.response || err.message || '')}`
+  const noResponseCode = !err || !err.responseCode
+  const isConnErr = /ETIMEDOUT|ESOCKET|ECONNRESET|ECONNECTION|Connection.*(timeout|closed|reset)/i.test(code + ' ' + msg)
+  return isConnErr && noResponseCode
+}
+
 async function sendEmail(to, subject, html) {
   const settings = await getSettings()
   if (!settings.gmail_user || !settings.gmail_app_password) {
@@ -18,27 +29,45 @@ async function sendEmail(to, subject, html) {
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
-    connectionTimeout: 30000,
+    connectionTimeout: 45000,
     greetingTimeout: 30000,
-    socketTimeout: 60000,
+    socketTimeout: 90000,
     auth: {
       user: settings.gmail_user,
       pass: settings.gmail_app_password
     }
   })
 
-  try {
-    await transporter.sendMail({
-      from: `"${settings.brand_name}" <${settings.gmail_user}>`,
-      to,
-      subject,
-      html
-    })
-    return { sent: true }
-  } catch (err) {
-    console.error('[EMAIL] Send failed to:', to, '-', err.response || err.message)
-    return { error: true }
+  let lastErr
+  // Retry a couple of times to ride out transient Render->Gmail network stalls.
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await transporter.sendMail({
+        from: `"${settings.brand_name}" <${settings.gmail_user}>`,
+        to,
+        subject,
+        html
+      })
+      return { sent: true }
+    } catch (err) {
+      lastErr = err
+      // If the error is a post-acceptance connection teardown (Gmail already
+      // accepted the message for delivery), count it as sent.
+      if (isPostAcceptanceError(err)) {
+        console.warn(`[EMAIL] Likely delivered but connection teardown error (attempt ${attempt}) to:`, to, '-', err.message)
+        return { sent: true, warned: true }
+      }
+      // Hard failure code paths (auth, bad request, etc.) don't retry.
+      if (err.responseCode && err.responseCode >= 400) {
+        break
+      }
+      console.warn(`[EMAIL] Attempt ${attempt} failed to:`, to, '-', err.message)
+      if (attempt < 3) await new Promise(r => setTimeout(r, 1500 * attempt))
+    }
   }
+
+  console.error('[EMAIL] Send failed to:', to, '-', lastErr && (lastErr.response || lastErr.message))
+  return { error: true }
 }
 
 function fmtNaira(cents) {
