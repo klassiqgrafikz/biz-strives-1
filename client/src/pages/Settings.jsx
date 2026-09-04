@@ -3,6 +3,7 @@ import { api } from '../lib/api'
 
 export default function Settings() {
   const [settings, setSettings] = useState({})
+  const [gmailAppPassword, setGmailAppPassword] = useState('')
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -29,7 +30,8 @@ export default function Settings() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await api.put('/settings', settings)
+      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword })
+      setGmailAppPassword('')
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
@@ -81,8 +83,16 @@ export default function Settings() {
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-muted mb-1">Gmail App Password</label>
-              <input name="gmail_app_password" type="password" value="" onChange={handleChange} className="input" placeholder="Enter to update" />
-              <p className="text-xs text-brand-muted">Generate at <a href="https://myaccount.google.com/apppasswords" target="_blank" className="text-brand-pink hover:underline">myaccount.google.com/apppasswords</a></p>
+              <input
+                name="gmail_app_password"
+                type="password"
+                value={gmailAppPassword}
+                onChange={e => setGmailAppPassword(e.target.value)}
+                className="input"
+                placeholder="Enter your app password to update"
+                autoComplete="new-password"
+              />
+              <p className="text-xs text-brand-muted">Generate at <a href="https://myaccount.google.com/apppasswords" target="_blank" className="text-brand-pink hover:underline">myaccount.google.com/apppasswords</a> — leave blank to keep your current password.</p>
             </div>
           </div>
         </div>
