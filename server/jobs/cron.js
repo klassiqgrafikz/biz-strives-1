@@ -24,13 +24,18 @@ async function sendEmail(to, subject, html) {
     }
   })
 
-  await transporter.sendMail({
-    from: `"${settings.brand_name}" <${settings.gmail_user}>`,
-    to,
-    subject,
-    html
-  })
-  return { sent: true }
+  try {
+    await transporter.sendMail({
+      from: `"${settings.brand_name}" <${settings.gmail_user}>`,
+      to,
+      subject,
+      html
+    })
+    return { sent: true }
+  } catch (err) {
+    console.error('[EMAIL] Send failed to:', to, '-', err.response || err.message)
+    return { error: true }
+  }
 }
 
 function fmtNaira(cents) {
@@ -105,9 +110,9 @@ export async function runBirthdayJob() {
     const result = await sendEmail(c.email, tpl.subject.replace('{brand}', settings.brand_name).replace('{name}', c.name), html)
     await queryInsert(
       'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
-      [c.id, 'birthday', result.sent ? 'sent' : 'skipped']
+      [c.id, 'birthday', result.sent ? 'sent' : result.error ? 'failed' : 'skipped']
     )
-    console.log('[CRON] Birthday', result.sent ? 'sent to' : 'skipped for', c.email)
+    console.log('[CRON] Birthday', result.sent ? 'sent to' : result.error ? 'FAILED for' : 'skipped for', c.email)
   }
 
   await markJobRun('birthday', periodKey)
@@ -253,7 +258,7 @@ export async function runMonthlyJob() {
       )
       await queryInsert(
         'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
-        [c.id, 'bulk_message', bulkResult.sent ? 'sent' : 'skipped']
+        [c.id, 'bulk_message', bulkResult.sent ? 'sent' : bulkResult.error ? 'failed' : 'skipped']
       )
     }
     console.log('[CRON] Bulk messages sent to', activeCustomers.length, 'customers')
@@ -320,9 +325,9 @@ export async function runSavingsReminderJob() {
   const result = await sendEmail(settings.statement_email, subject, html)
   await queryInsert(
     'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
-    [null, 'savings_reminder', result.sent ? 'sent' : 'skipped']
+    [null, 'savings_reminder', result.sent ? 'sent' : result.error ? 'failed' : 'skipped']
   )
-  console.log('[CRON] Savings reminder', result.sent ? 'emailed to' : 'skipped for', settings.statement_email)
+  console.log('[CRON] Savings reminder', result.sent ? 'emailed to' : result.error ? 'FAILED for' : 'skipped for', settings.statement_email)
 
   await markJobRun('savings_reminder', periodKey)
 }
