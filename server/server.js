@@ -20,7 +20,14 @@ import adminRoutes from './routes/admin.js'
 import healthRoutes from './routes/health.js'
 import { runCatchUp, scheduleJobs } from './jobs/cron.js'
 import { queryAll, queryInsert, queryExec } from './db/pool.js'
-import { DEFAULT_TEMPLATES } from './lib/defaultTemplates.js'
+import { DEFAULT_TEMPLATES, DEFAULT_BRAND_NAME } from './lib/defaultTemplates.js'
+
+const PREV_DEFAULTS = {
+  birthday: {
+    subject: 'Happy Birthday, {name}! | {brand}',
+    body: `Dear {name},\n\nOn behalf of everyone at {brand}, we extend our warmest wishes to you on your special day.\n\nYour continued trust and support mean a great deal to us. We hope this new year brings you abundant joy, good health, and continued success in all your endeavours.\n\nWishing you a most wonderful birthday.\n\nWith sincere regards,\nThe {brand} Team`
+  }
+}
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -77,18 +84,25 @@ app.use('/api/*', (req, res) => {
 async function seedDefaults() {
   try {
     for (const tpl of DEFAULT_TEMPLATES) {
-      const existing = await queryAll('SELECT id FROM templates WHERE type = $1 LIMIT 1', [tpl.type])
+      const existing = await queryAll('SELECT id, body FROM templates WHERE type = $1 LIMIT 1', [tpl.type])
       if (existing.length === 0) {
         await queryInsert(
           'INSERT INTO templates (name, subject, body, type) VALUES ($1, $2, $3, $4)',
           [tpl.name, tpl.subject, tpl.body, tpl.type]
         )
         console.log(`[SEED] Inserted default template: ${tpl.type}`)
+      } else {
+        const prev = PREV_DEFAULTS[tpl.type]
+        if (prev && existing[0].body === prev.body) {
+          await queryExec('UPDATE templates SET name = $1, subject = $2, body = $3 WHERE type = $4',
+            [tpl.name, tpl.subject, tpl.body, tpl.type])
+          console.log(`[SEED] Upgraded default template: ${tpl.type}`)
+        }
       }
     }
 
-    const existing = await queryAll('SELECT brand_name FROM settings WHERE id = 1')
-    if (existing.length > 0 && !existing[0].brand_name) {
+    const settings = await queryAll('SELECT brand_name FROM settings WHERE id = 1')
+    if (settings.length > 0 && !settings[0].brand_name) {
       await queryExec('UPDATE settings SET brand_name = $1 WHERE id = 1', [DEFAULT_BRAND_NAME])
       console.log('[SEED] Set default brand name:', DEFAULT_BRAND_NAME)
     }

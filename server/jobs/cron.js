@@ -1,7 +1,40 @@
 import cron from 'node-cron'
 import nodemailer from 'nodemailer'
 import PDFDocument from 'pdfkit'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { queryOne, queryAll, queryExec, queryInsert } from '../db/pool.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const BIRTHDAY_HEADER_PATH = path.join(__dirname, '..', 'assets', 'birthday-header.png')
+
+function plainToHtml(text) {
+  if (/<[a-z][\s\S]*>/i.test(text)) return text
+  const paragraphs = text.trim().split(/\n\s*\n/)
+  return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('')
+}
+
+function buildBirthdayHtml(body) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:8px;overflow:hidden;">
+<tr><td><img src="cid:birthday-header" width="600" style="display:block;width:100%;max-width:600px;height:auto;border-radius:8px 8px 0 0;" alt="Happy Birthday"></td></tr>
+<tr><td style="padding:30px 40px;color:#333333;font-size:15px;line-height:1.7;">
+${body}
+</td></tr>
+<tr><td style="padding:0 40px 30px;"><hr style="border:none;border-top:1px solid #eee;margin:0;"></td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>`
+}
 
 async function getSettings() {
   return await queryOne('SELECT * FROM settings WHERE id = 1')
@@ -18,7 +51,7 @@ function isPostAcceptanceError(err) {
   return isConnErr && noResponseCode
 }
 
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, attachments) {
   const settings = await getSettings()
   if (!settings.gmail_user || !settings.gmail_app_password) {
     console.log('[EMAIL] Not configured - would send to:', to, subject)
@@ -42,12 +75,14 @@ async function sendEmail(to, subject, html) {
   // Retry a couple of times to ride out transient Render->Gmail network stalls.
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      await transporter.sendMail({
+      const mailOptions = {
         from: `"${settings.brand_name}" <${settings.gmail_user}>`,
         to,
         subject,
         html
-      })
+      }
+      if (attachments) mailOptions.attachments = attachments
+      await transporter.sendMail(mailOptions)
       return { sent: true }
     } catch (err) {
       lastErr = err
@@ -137,9 +172,15 @@ export async function runBirthdayJob() {
     return
   }
 
+  let birthdayAttachments
+  if (fs.existsSync(BIRTHDAY_HEADER_PATH)) {
+    birthdayAttachments = [{ filename: 'birthday-header.png', path: BIRTHDAY_HEADER_PATH, cid: 'birthday-header' }]
+  }
+
   for (const c of customers) {
-    const html = renderTemplate(tpl, { name: c.name, brand: settings.brand_name })
-    const result = await sendEmail(c.email, tpl.subject.replace('{brand}', settings.brand_name).replace('{name}', c.name), html)
+    const renderedBody = renderTemplate(tpl, { name: c.name, brand: settings.brand_name })
+    const html = buildBirthdayHtml(plainToHtml(renderedBody))
+    const result = await sendEmail(c.email, tpl.subject.replace('{name}', c.name), html, birthdayAttachments)
     await queryInsert(
       'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
       [c.id, 'birthday', result.sent ? 'sent' : result.error ? 'failed' : 'skipped']

@@ -26,14 +26,12 @@ The {brand} Team`,
   },
   {
     name: 'Birthday Greeting',
-    subject: 'Happy Birthday, {name}! | {brand}',
-    body: `Dear {name},
+    subject: 'Happy Birthday, {name}',
+    body: `Happy Birthday, {name}! 🎂
 
-On behalf of everyone at {brand}, we extend our warmest wishes to you on your special day.
+On behalf of everyone at {brand}, we wish you a truly wonderful birthday! 🥳✨ Thank you for your continued trust and support. May this new year bring you greater opportunities, good health, abundant joy, and remarkable success in all your endeavours.
 
-Your continued trust and support mean a great deal to us. We hope this new year brings you abundant joy, good health, and continued success in all your endeavours.
-
-Wishing you a most wonderful birthday.
+Wishing you a beautiful and prosperous year ahead!
 
 With sincere regards,
 The {brand} Team`,
