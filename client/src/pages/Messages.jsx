@@ -95,86 +95,86 @@ export default function Messages() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">Messaging Center</h1>
+    <div className="space-y-6 text-brand-text">
+      <h1 className="text-2xl font-bold">Messaging Center</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="card">
+          <div className="p-4 border-b border-brand-border flex items-center justify-between">
             <h2 className="text-lg font-semibold">Message Templates</h2>
-            <button onClick={openAdd} className="text-sm text-blue-600 hover:underline">Add Template</button>
+            <button onClick={openAdd} className="text-sm text-brand-pink hover:underline">Add Template</button>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-brand-border">
             {templates.map(t => (
               <div key={t.id} className="p-4">
                 <h3 className="font-medium">{t.name}</h3>
-                <p className="text-sm text-gray-500 mb-2">{t.subject}</p>
+                <p className="text-sm text-brand-muted mb-2">{t.subject}</p>
                 <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-0.5 text-xs rounded-full ${t.type === 'monthly' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}`}>
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${t.type === 'monthly' ? 'bg-brand-pink bg-opacity-20 text-pink-400' : 'bg-brand-lime bg-opacity-20 text-brand-lime'}`}>
                     {t.type}
                   </span>
-                  <button onClick={() => openEdit(t)} className="text-sm text-blue-600 hover:underline">Edit</button>
-                  <button onClick={() => handleDelete(t.id)} className="text-sm text-red-600 hover:underline">Delete</button>
+                  <button onClick={() => openEdit(t)} className="text-sm text-brand-pink hover:underline">Edit</button>
+                  <button onClick={() => handleDelete(t.id)} className="text-sm text-pink-500 hover:underline">Delete</button>
                 </div>
               </div>
             ))}
             {templates.length === 0 && (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-brand-muted">
                 <p>No message templates configured.</p>
-                <button onClick={openAdd} className="text-blue-600 hover:underline mt-2">Create your first template</button>
+                <button onClick={openAdd} className="text-brand-pink hover:underline mt-2">Create your first template</button>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200">
+        <div className="card">
+          <div className="p-4 border-b border-brand-border">
             <h2 className="text-lg font-semibold">Automation Schedule</h2>
           </div>
           <div className="p-4 space-y-3">
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <p className="font-medium text-blue-800">Monthly Statement</p>
-              <p className="text-sm text-blue-700 mt-1">
+            <div className="bg-brand-pink bg-opacity-20 border border-brand-pink border-opacity-40 rounded-md p-3">
+              <p className="font-medium text-pink-400">Monthly Statement</p>
+              <p className="text-sm text-brand-muted mt-1">
                 Emailed to your statement email on the last day of each month at 9pm, along with the monthly template to all active customers.
               </p>
             </div>
-            <div className="bg-pink-50 border border-pink-200 rounded-md p-3">
-              <p className="font-medium text-pink-800">Birthday Messages</p>
-              <p className="text-sm text-pink-700 mt-1">
+            <div className="bg-brand-lime bg-opacity-20 border border-brand-lime border-opacity-40 rounded-md p-3">
+              <p className="font-medium text-brand-lime">Birthday Messages</p>
+              <p className="text-sm text-brand-muted mt-1">
                 Sent daily at 8am to customers whose birthday is today, using the Birthday template.
               </p>
             </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-              <p className="font-medium text-yellow-800">Savings Reminder</p>
-              <p className="text-sm text-yellow-700 mt-1">
+            <div className="bg-brand-surface2 border border-brand-border rounded-md p-3">
+              <p className="font-medium text-yellow-400">Savings Reminder</p>
+              <p className="text-sm text-brand-muted mt-1">
                 Emailed every Friday at 6pm if no savings were recorded that week.
               </p>
             </div>
-            <a href="#" onClick={e => { e.preventDefault(); downloadPDF() }} className="block text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">
+            <a href="#" onClick={e => { e.preventDefault(); downloadPDF() }} className="block text-center bg-brand-lime text-gray-900 font-semibold py-2 px-4 rounded-md hover:bg-lime-300">
               Download Current PDF Statement
             </a>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-brand-muted">
               Templates are used automatically. Edit them below to customize what is sent.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-4 border-b border-gray-200">
+      <div className="card">
+        <div className="p-4 border-b border-brand-border">
           <h2 className="text-lg font-semibold">Recent Messages</h2>
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-brand-border">
 {log.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No messages sent yet</div>
+              <div className="p-4 text-center text-brand-muted">No messages sent yet</div>
             ) : (
               log.slice(0, 20).map(m => (
                 <div key={m.id} className="p-4 flex items-center justify-between">
                   <div>
                     <span className="font-medium">{m.type.replace('_', ' ').toUpperCase()}</span>
-                    <span className="text-gray-500 text-sm ml-2">({m.customer_name || 'System'})</span>
+                    <span className="text-brand-muted text-sm ml-2">({m.customer_name || 'System'})</span>
                   </div>
-                  <span className="text-xs text-gray-500">{new Date(m.sent_at).toLocaleString()}</span>
+                  <span className="text-xs text-brand-muted">{new Date(m.sent_at).toLocaleString()}</span>
                 </div>
               ))
             )}

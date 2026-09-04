@@ -76,40 +76,40 @@ export default function Payments() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
 
   return (
-    <div>
+    <div className="text-brand-text">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Payments Received</h1>
+        <h1 className="text-2xl font-bold">Payments Received</h1>
         <button onClick={openAdd} className="btn btn-primary">Record Payment</button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="card overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-brand-surface2 border-b border-brand-border">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Note</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-brand-muted uppercase">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-brand-muted uppercase">Customer</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-brand-muted uppercase">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-brand-muted uppercase">Method</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-brand-muted uppercase">Note</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-brand-muted uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-brand-border">
             {payments.map(p => (
-              <tr key={p.id} className="hover:bg-gray-50">
+              <tr key={p.id} className="hover:bg-brand-surface2">
                 <td className="px-4 py-3">{new Date(p.received_at).toLocaleDateString()}</td>
                 <td className="px-4 py-3 font-medium">{p.customer_name}</td>
-                <td className="px-4 py-3 text-green-600 font-semibold">{fmtNaira(p.amount_cents)}</td>
+                <td className="px-4 py-3 text-brand-lime font-semibold">{fmtNaira(p.amount_cents)}</td>
                 <td className="px-4 py-3">{p.method}</td>
                 <td className="px-4 py-3">{p.note || '-'}</td>
                 <td className="px-4 py-3 text-right space-x-2">
-                  <button onClick={() => openEdit(p)} className="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
-                  <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                  <button onClick={() => openEdit(p)} className="text-brand-pink hover:text-pink-400 text-sm">Edit</button>
+                  <button onClick={() => handleDelete(p.id)} className="text-pink-500 hover:text-pink-400 text-sm">Delete</button>
                 </td>
               </tr>
             ))}
             {payments.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No payments recorded yet</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-brand-muted">No payments recorded yet</td></tr>
             )}
           </tbody>
         </table>
@@ -125,17 +125,17 @@ export default function Payments() {
       >
         <form id="paymentForm" onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Customer *</label>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Customer *</label>
             <select name="customer_id" value={form.customer_id} onChange={e => setForm({...form, customer_id: e.target.value})} required className="input">
               {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amount (₦) *</label>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Amount (₦) *</label>
             <input type="number" step="0.01" min="0.01" name="amount" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required className="input" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Method</label>
             <select name="method" value={form.method} onChange={e => setForm({...form, method: e.target.value})} className="input">
               <option value="bank_transfer">Bank Transfer</option>
               <option value="cash">Cash</option>
@@ -144,7 +144,7 @@ export default function Payments() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Note</label>
             <input name="note" value={form.note} onChange={e => setForm({...form, note: e.target.value})} className="input" />
           </div>
         </form>
