@@ -18,6 +18,7 @@ import messageRoutes from './routes/messages.js'
 import adminRoutes from './routes/admin.js'
 import healthRoutes from './routes/health.js'
 import { runCatchUp, scheduleJobs } from './jobs/cron.js'
+import { queryAll, queryInsert } from './db/pool.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -70,8 +71,74 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'Not found' })
 })
 
+async function seedDefaultTemplates() {
+  try {
+    const existing = await queryAll('SELECT id FROM templates LIMIT 1')
+    if (existing.length > 0) return
+
+    const defaults = [
+      {
+        name: 'Monthly Statement',
+        subject: 'Your {month} Statement from {brand}',
+        body: `Dear {name},
+
+Your statement for {month} is ready.
+
+Summary:
+- Total Received: {total_received}
+- Total Spent: {total_spent}
+- Saved: {total_saved}
+- Net Cash: {net_cash}
+
+View full details in your BizStrives dashboard.
+
+Regards,
+{brand}`,
+        type: 'monthly'
+      },
+      {
+        name: 'Birthday Greeting',
+        subject: 'Happy Birthday from {brand}!',
+        body: `Dear {name},
+
+Happy Birthday!
+
+On behalf of everyone at {brand}, we wish you a wonderful day and a fantastic year ahead. Thank you for being a valued part of our community.
+
+Warm regards,
+The {brand} Team`,
+        type: 'birthday'
+      },
+      {
+        name: 'Savings Reminder',
+        subject: 'Weekly Savings Reminder - {brand}',
+        body: `Hi {name},
+
+This is a friendly reminder from {brand} to keep growing your savings pot.
+
+You haven't recorded any savings this week. Even small amounts add up!
+
+Keep striving,
+The {brand} Team`,
+        type: 'savings_reminder'
+      }
+    ]
+
+    for (const t of defaults) {
+      await queryInsert(
+        'INSERT INTO templates (name, subject, body, type) VALUES ($1, $2, $3, $4) ON CONFLICT (name) DO NOTHING',
+        [t.name, t.subject, t.body, t.type]
+      )
+    }
+    console.log('[SEED] Default templates inserted')
+  } catch (err) {
+    console.error('[SEED] Failed to seed templates:', err.message)
+  }
+}
+
 const server = app.listen(PORT, async () => {
   await runCatchUp()
+  await seedDefaultTemplates()
   scheduleJobs()
   console.log(`Server running at http://localhost:${PORT}`)
 

@@ -180,6 +180,75 @@ export default function Messages() {
             )}
           </div>
       </div>
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editing ? 'Edit Template' : 'Add Template'}
+        action={<button type="submit" form="templateForm" className="btn btn-primary">{editing ? 'Update' : 'Save'}</button>}
+      >
+        <form id="templateForm" onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Name *</label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={e => setForm({...form, name: e.target.value})}
+              required
+              placeholder="e.g. Monthly Statement, Birthday Greeting"
+              className="input"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Subject *</label>
+            <input
+              name="subject"
+              value={form.subject}
+              onChange={e => setForm({...form, subject: e.target.value})}
+              required
+              placeholder="e.g. Your {month} Statement from {brand}"
+              className="input"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Type *</label>
+            <select
+              name="type"
+              value={form.type}
+              onChange={e => setForm({...form, type: e.target.value})}
+              required
+              className="input"
+            >
+              <option value="monthly">Monthly Statement</option>
+              <option value="birthday">Birthday Greeting</option>
+              <option value="savings_reminder">Savings Reminder</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Body *</label>
+            <textarea
+              name="body"
+              value={form.body}
+              onChange={e => setForm({...form, body: e.target.value})}
+              required
+              rows={8}
+              placeholder="Dear {name},&#10;&#10;Your statement for {month} is ready.&#10;&#10;Total Received: {total_received}&#10;Total Spent: {total_spent}&#10;Saved: {total_saved}&#10;Net Cash: {net_cash}&#10;&#10;Regards,&#10;{brand}"
+              className="input resize-y"
+            />
+          </div>
+          <div className="bg-brand-surface2 border border-brand-border rounded-md p-3">
+            <p className="text-xs font-medium text-brand-muted mb-2">Available placeholders:</p>
+            <div className="flex flex-wrap gap-2">
+              {['{name}', '{brand}', '{month}', '{total_received}', '{total_spent}', '{total_saved}', '{net_cash}'].map(v => (
+                <code key={v} className="text-xs bg-brand-bg border border-brand-border px-2 py-0.5 rounded text-brand-pink">{v}</code>
+              ))}
+            </div>
+            <p className="text-xs text-brand-muted mt-2">
+              Monthly uses all. Birthday uses <code className="text-brand-pink">{'{name}'}</code> and <code className="text-brand-pink">{'{brand}'}</code> only. Savings reminder uses <code className="text-brand-pink">{'{brand}'}</code> only.
+            </p>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
