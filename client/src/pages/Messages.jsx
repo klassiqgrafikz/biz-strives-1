@@ -2,6 +2,61 @@ import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import Modal from '../components/Modal'
 
+const DEFAULT_TEMPLATES = {
+  monthly: {
+    name: 'Monthly Statement',
+    subject: 'Your {month} Financial Statement | {brand}',
+    body: `Dear {name},
+
+We are pleased to present your financial statement for {month}.
+
+MONTHLY SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Received:     {total_received}
+Total Spent:        {total_spent}
+Amount Saved:       {total_saved}
+Net Cash Flow:      {net_cash}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A detailed breakdown of all transactions for this period is available in your account. Should you have any questions regarding this statement, please do not hesitate to reply to this message.
+
+Thank you for your continued patronage.
+
+Kind regards,
+The {brand} Team`
+  },
+  birthday: {
+    name: 'Birthday Greeting',
+    subject: 'Happy Birthday, {name}! | {brand}',
+    body: `Dear {name},
+
+On behalf of everyone at {brand}, we extend our warmest wishes to you on your special day.
+
+Your continued trust and support mean a great deal to us. We hope this new year brings you abundant joy, good health, and continued success in all your endeavours.
+
+Wishing you a most wonderful birthday.
+
+With sincere regards,
+The {brand} Team`
+  },
+  savings_reminder: {
+    name: 'Savings Reminder',
+    subject: 'Weekly Savings Reminder | {brand}',
+    body: `Dear Valued Customer,
+
+This is a courteous reminder from {brand} that no savings have been recorded for this week.
+
+Consistent saving remains one of the most effective paths toward achieving your financial goals. We encourage you to make a deposit at your earliest convenience to keep your savings plan on track.
+
+You may log your savings through your dashboard at any time.
+
+Thank you for your attention.
+
+Kind regards,
+The {brand} Team`
+  }
+}
+
 export default function Messages() {
   const [templates, setTemplates] = useState([])
   const [log, setLog] = useState([])
@@ -215,7 +270,15 @@ export default function Messages() {
             <select
               name="type"
               value={form.type}
-              onChange={e => setForm({...form, type: e.target.value})}
+              onChange={e => {
+                const newType = e.target.value
+                const defaults = DEFAULT_TEMPLATES[newType]
+                if (defaults && !editing) {
+                  setForm({ name: defaults.name, subject: defaults.subject, body: defaults.body, type: newType })
+                } else {
+                  setForm({...form, type: newType})
+                }
+              }}
               required
               className="input"
             >
@@ -244,7 +307,10 @@ export default function Messages() {
               ))}
             </div>
             <p className="text-xs text-brand-muted mt-2">
-              Monthly uses all. Birthday uses <code className="text-brand-pink">{'{name}'}</code> and <code className="text-brand-pink">{'{brand}'}</code> only. Savings reminder uses <code className="text-brand-pink">{'{brand}'}</code> only.
+              {form.type === 'monthly' && 'Monthly uses all placeholders.'}
+              {form.type === 'birthday' && <>Birthday uses <code className="text-brand-pink">{'{name}'}</code> and <code className="text-brand-pink">{'{brand}'}</code> only.</>}
+              {form.type === 'savings_reminder' && <>Savings reminder uses <code className="text-brand-pink">{'{brand}'}</code> only.</>}
+              {' '}Changing the type auto-fills the name, subject and body with that type's default template.
             </p>
           </div>
         </form>

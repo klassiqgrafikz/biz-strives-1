@@ -102,12 +102,12 @@ export async function runBirthdayJob() {
 
   for (const c of customers) {
     const html = renderTemplate(tpl, { name: c.name, brand: settings.brand_name })
-    await sendEmail(c.email, tpl.subject.replace('{brand}', settings.brand_name), html)
+    const result = await sendEmail(c.email, tpl.subject.replace('{brand}', settings.brand_name).replace('{name}', c.name), html)
     await queryInsert(
       'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
-      [c.id, 'birthday', 'sent']
+      [c.id, 'birthday', result.sent ? 'sent' : 'skipped']
     )
-    console.log('[CRON] Birthday sent to', c.email)
+    console.log('[CRON] Birthday', result.sent ? 'sent to' : 'skipped for', c.email)
   }
 
   await markJobRun('birthday', periodKey)
@@ -246,14 +246,14 @@ export async function runMonthlyJob() {
         total_saved: fmtNaira(savingsTotal),
         net_cash: fmtNaira(net)
       })
-      await sendEmail(
+      const bulkResult = await sendEmail(
         c.email,
         tpl.subject.replace('{brand}', settings.brand_name).replace('{month}', lastMonth.toLocaleString('default', { month: 'long', year: 'numeric' })),
         html
       )
       await queryInsert(
         'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
-        [c.id, 'bulk_message', 'sent']
+        [c.id, 'bulk_message', bulkResult.sent ? 'sent' : 'skipped']
       )
     }
     console.log('[CRON] Bulk messages sent to', activeCustomers.length, 'customers')
@@ -305,13 +305,24 @@ export async function runSavingsReminderJob() {
     return
   }
 
-  await sendEmail(
-    settings.statement_email,
-    `Savings Reminder - ${new Date().toLocaleDateString('default', { month: 'long', day: 'numeric' })}`,
-    `<p>You haven't recorded any savings this week.</p>
-     <p>Take a moment to log your weekly savings so your records stay up to date.</p>`
+  const tpl = await queryOne("SELECT * FROM templates WHERE type = 'savings_reminder' LIMIT 1")
+
+  let html
+  let subject
+  if (tpl) {
+    html = renderTemplate(tpl, { brand: settings.brand_name })
+    subject = tpl.subject.replace('{brand}', settings.brand_name)
+  } else {
+    html = `<p>You haven't recorded any savings this week.</p><p>Take a moment to log your weekly savings so your records stay up to date.</p>`
+    subject = `Savings Reminder - ${new Date().toLocaleDateString('default', { month: 'long', day: 'numeric' })}`
+  }
+
+  const result = await sendEmail(settings.statement_email, subject, html)
+  await queryInsert(
+    'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
+    [null, 'savings_reminder', result.sent ? 'sent' : 'skipped']
   )
-  console.log('[CRON] Savings reminder emailed to', settings.statement_email)
+  console.log('[CRON] Savings reminder', result.sent ? 'emailed to' : 'skipped for', settings.statement_email)
 
   await markJobRun('savings_reminder', periodKey)
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import StatCard from '../components/StatCard'
+import Modal from '../components/Modal'
 
 const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const todayStr = () => new Date().toISOString().slice(0, 10)
@@ -13,6 +14,10 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   const [incomeForm, setIncomeForm] = useState({ amount: '', note: '', date: todayStr() })
   const [incomeSaving, setIncomeSaving] = useState(false)
+  const [editModal, setEditModal] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [editForm, setEditForm] = useState({ amount: '', note: '', date: todayStr() })
+  const [editSaving, setEditSaving] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -52,6 +57,54 @@ export default function Dashboard() {
       alert(err.message)
     } finally {
       setIncomeSaving(false)
+    }
+  }
+
+  const openEdit = (p) => {
+    setEditing(p)
+    setEditForm({
+      amount: (p.amount_cents / 100).toFixed(2),
+      note: p.note || '',
+      date: p.received_at ? p.received_at.slice(0, 10) : todayStr()
+    })
+    setEditModal(true)
+  }
+
+  const saveEdit = async (e) => {
+    e.preventDefault()
+    const amount = parseFloat(editForm.amount)
+    if (!amount || amount <= 0) {
+      alert('Enter a valid amount')
+      return
+    }
+    setEditSaving(true)
+    try {
+      await api.put(`/payments/${editing.id}`, {
+        amount: editForm.amount,
+        note: editForm.note,
+        date: editForm.date,
+        customer_id: editing.customer_id,
+        source: editing.source || 'manual'
+      })
+      setEditModal(false)
+      setLoading(true)
+      await loadData()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const deletePayment = async (p) => {
+    if (confirm(`Delete payment of ${fmtNaira(p.amount_cents)}${p.customer_name !== 'Manual' ? ' from ' + p.customer_name : ''}?`)) {
+      try {
+        await api.delete(`/payments/${p.id}`)
+        setLoading(true)
+        await loadData()
+      } catch (err) {
+        alert(err.message)
+      }
     }
   }
 
@@ -125,7 +178,11 @@ export default function Dashboard() {
                     <p className="font-medium">{p.customer_name}</p>
                     <p className="text-sm text-brand-muted">{new Date(p.received_at).toLocaleDateString()} · {p.method}{p.note ? ' · ' + p.note : ''}</p>
                   </div>
-                  <span className="text-brand-lime font-semibold">{fmtNaira(p.amount_cents)}</span>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-brand-lime font-semibold">{fmtNaira(p.amount_cents)}</span>
+                    <button onClick={() => openEdit(p)} className="text-xs text-brand-pink hover:underline">Edit</button>
+                    <button onClick={() => deletePayment(p)} className="text-xs text-pink-500 hover:underline">Delete</button>
+                  </div>
                 </div>
               ))
             )}
@@ -158,6 +215,47 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold mb-3">Savings Pot Balance</h2>
         <p className="text-2xl font-bold text-brand-pink">{fmtNaira(data.savingsBalance)}</p>
       </div>
+
+      <Modal
+        isOpen={editModal}
+        onClose={() => setEditModal(false)}
+        title="Edit Payment"
+        action={<button type="submit" form="editPaymentForm" className="btn btn-primary">{editSaving ? 'Saving...' : 'Save Changes'}</button>}
+      >
+        <form id="editPaymentForm" onSubmit={saveEdit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Amount (₦) *</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              value={editForm.amount}
+              onChange={e => setEditForm({ ...editForm, amount: e.target.value })}
+              className="input w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Note</label>
+            <input
+              type="text"
+              value={editForm.note}
+              onChange={e => setEditForm({ ...editForm, note: e.target.value })}
+              className="input w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Date *</label>
+            <input
+              type="date"
+              required
+              value={editForm.date}
+              onChange={e => setEditForm({ ...editForm, date: e.target.value })}
+              className="input w-full"
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
