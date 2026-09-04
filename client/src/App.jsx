@@ -10,6 +10,7 @@ import Expenses from './pages/Expenses'
 import Savings from './pages/Savings'
 import Reports from './pages/Reports'
 import Messages from './pages/Messages'
+import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
 
 function ProtectedRoute({ children }) {
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="/savings" element={<Savings />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />

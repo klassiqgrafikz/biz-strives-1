@@ -30,3 +30,18 @@ body {
     @apply bg-brand-surface rounded-lg border border-brand-border shadow;
   }
 }
+
+/* ContentEditable placeholder */
+[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+[contenteditable] {
+  min-height: 220px;
+}
+
+[contenteditable] p {
+  margin-bottom: 0.5em;
+}

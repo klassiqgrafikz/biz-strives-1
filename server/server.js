@@ -15,6 +15,7 @@ import reportRoutes from './routes/reports.js'
 import templateRoutes from './routes/templates.js'
 import settingsRoutes from './routes/settings.js'
 import messageRoutes from './routes/messages.js'
+import notificationRoutes from './routes/notifications.js'
 import adminRoutes from './routes/admin.js'
 import healthRoutes from './routes/health.js'
 import { runCatchUp, scheduleJobs } from './jobs/cron.js'
@@ -49,6 +50,7 @@ const routes = [
   ['/api/templates', templateRoutes],
   ['/api/settings', settingsRoutes],
   ['/api/messages', messageRoutes],
+  ['/api/notifications', notificationRoutes],
   ['/api/admin', adminRoutes]
 ]
 

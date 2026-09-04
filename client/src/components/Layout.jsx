@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import Icon from './Icon'
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { path: '/customers', label: 'Customers', icon: '👥' },
-  { path: '/payments', label: 'Payments', icon: '💰' },
-  { path: '/expenses', label: 'Expenses', icon: '💸' },
-  { path: '/savings', label: 'Savings', icon: '🏦' },
-  { path: '/reports', label: 'Reports', icon: '📄' },
-  { path: '/messages', label: 'Messages', icon: '✉️' },
-  { path: '/settings', label: 'Settings', icon: '⚙️' },
+  { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { path: '/customers', label: 'Customers', icon: 'customers' },
+  { path: '/payments', label: 'Payments', icon: 'payments' },
+  { path: '/expenses', label: 'Expenses', icon: 'expenses' },
+  { path: '/savings', label: 'Savings', icon: 'savings' },
+  { path: '/reports', label: 'Reports', icon: 'reports' },
+  { path: '/messages', label: 'Messages', icon: 'messages' },
+  { path: '/notifications', label: 'Notifications', icon: 'notification' },
+  { path: '/settings', label: 'Settings', icon: 'settings' },
 ]
 
 export default function Layout() {
@@ -42,8 +44,9 @@ export default function Layout() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-brand-muted hidden sm:inline">{user?.username}</span>
-          <button onClick={logout} className="text-brand-muted hover:text-brand-pink text-sm font-medium transition-colors">
-            Logout
+          <button onClick={logout} className="flex items-center gap-2 text-brand-muted hover:text-brand-pink text-sm font-medium transition-colors">
+            <Icon name="logout" />
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </header>
@@ -74,7 +77,7 @@ export default function Layout() {
                     : 'text-brand-muted hover:text-brand-text hover:bg-brand-surface2'
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
+                <Icon name={item.icon} />
                 {item.label}
               </Link>
             ))}

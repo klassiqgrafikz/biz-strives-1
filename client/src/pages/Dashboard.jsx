@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import StatCard from '../components/StatCard'
 import Modal from '../components/Modal'
+import LagosClock from '../components/LagosClock'
 
 const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const todayStr = () => new Date().toISOString().slice(0, 10)
@@ -115,6 +116,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-brand-text">Dashboard</h1>
+        <LagosClock />
       </div>
 
       <div className="card p-5">
