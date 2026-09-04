@@ -65,14 +65,15 @@ router.get('/:id', async (req, res) => {
 // POST /api/payments
 router.post('/', async (req, res) => {
   try {
-    const { customer_id, amount, method, note } = req.body
+    const { customer_id, amount, method, note, date } = req.body
     const cents = Math.round(parseFloat(amount) * 100)
     if (!customer_id || !cents) {
       return res.status(400).json({ error: 'Customer and amount required' })
     }
+    const receivedAt = date ? new Date(date).toISOString() : new Date().toISOString()
     const payment = await queryInsert(
-      'INSERT INTO payments (customer_id, source, amount_cents, method, note) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [customer_id, 'customer', cents, method || 'bank_transfer', note || null]
+      'INSERT INTO payments (customer_id, source, amount_cents, method, note, received_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [customer_id, 'customer', cents, method || 'bank_transfer', note || null, receivedAt]
     )
     res.json({ data: payment })
   } catch (err) {
@@ -84,14 +85,20 @@ router.post('/', async (req, res) => {
 // PUT /api/payments/:id
 router.put('/:id', async (req, res) => {
   try {
-    const { customer_id, amount, method, note } = req.body
+    const { customer_id, amount, method, note, date } = req.body
     const cents = Math.round(parseFloat(amount) * 100)
     if (!customer_id || !cents) return res.status(400).json({ error: 'Customer and amount required' })
 
-    const payment = await queryOne(
-      'UPDATE payments SET customer_id=$1, amount_cents=$2, method=$3, note=$4 WHERE id=$5 RETURNING *',
-      [customer_id, cents, method || 'bank_transfer', note || null, req.params.id]
-    )
+    const receivedAt = date ? new Date(date).toISOString() : undefined
+    const payment = receivedAt
+      ? await queryOne(
+          'UPDATE payments SET customer_id=$1, amount_cents=$2, method=$3, note=$4, received_at=$5 WHERE id=$6 RETURNING *',
+          [customer_id, cents, method || 'bank_transfer', note || null, receivedAt, req.params.id]
+        )
+      : await queryOne(
+          'UPDATE payments SET customer_id=$1, amount_cents=$2, method=$3, note=$4 WHERE id=$5 RETURNING *',
+          [customer_id, cents, method || 'bank_transfer', note || null, req.params.id]
+        )
     if (!payment) return res.status(404).json({ error: 'Payment not found' })
     res.json({ data: payment })
   } catch (err) {

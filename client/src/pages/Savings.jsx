@@ -3,13 +3,14 @@ import { api } from '../lib/api'
 import Modal from '../components/Modal'
 
 const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export default function Savings() {
   const [entries, setEntries] = useState([])
   const [balance, setBalance] = useState(0)
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
-  const [form, setForm] = useState({ amount: '', description: '' })
+  const [form, setForm] = useState({ amount: '', description: '', date: todayStr() })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => loadSavings(), [])
@@ -30,19 +31,19 @@ export default function Savings() {
   }
 
   const openDeposit = () => {
-    setForm({ amount: '', description: 'Deposit' })
+    setForm({ amount: '', description: 'Deposit', date: todayStr() })
     setShowDepositModal(true)
   }
 
   const openWithdraw = () => {
-    setForm({ amount: '', description: 'Withdrawal' })
+    setForm({ amount: '', description: 'Withdrawal', date: todayStr() })
     setShowWithdrawModal(true)
   }
 
   const handleDeposit = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/savings/deposit', { amount: form.amount, description: form.description })
+      await api.post('/savings/deposit', { amount: parseFloat(form.amount), description: form.description, date: form.date })
       setShowDepositModal(false)
       loadSavings()
     } catch (err) {
@@ -53,7 +54,7 @@ export default function Savings() {
   const handleWithdraw = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/savings/withdraw', { amount: form.amount, description: form.description })
+      await api.post('/savings/withdraw', { amount: parseFloat(form.amount), description: form.description, date: form.date })
       setShowWithdrawModal(false)
       loadSavings()
     } catch (err) {
@@ -133,10 +134,14 @@ export default function Savings() {
         title="Add to Savings"
         action={<button type="submit" form="depositForm" className="btn btn-cta">Add to Pot</button>}
       >
-        <form id="depositForm" onSubmit={e => { e.preventDefault(); api.post('/savings/deposit', { amount: parseFloat(form.amount), description: form.description }).then(() => { setShowDepositModal(false); window.location.reload() }).catch(alert) }} className="space-y-4">
+        <form id="depositForm" onSubmit={handleDeposit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Amount (₦) *</label>
             <input type="number" step="0.01" min="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required className="input" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Date *</label>
+            <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="input" />
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Description</label>
@@ -154,10 +159,14 @@ export default function Savings() {
         <div className="bg-brand-pink bg-opacity-20 p-3 rounded-md mb-3">
           <p className="text-sm text-pink-400">Current Balance: {fmtNaira(balance)}</p>
         </div>
-        <form id="withdrawForm" onSubmit={e => { e.preventDefault(); api.post('/savings/withdraw', { amount: parseFloat(form.amount), description: form.description }).then(() => { setShowWithdrawModal(false); window.location.reload() }).catch(alert) }} className="space-y-4">
+        <form id="withdrawForm" onSubmit={handleWithdraw} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Amount (₦) *</label>
             <input type="number" step="0.01" min="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required className="input" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Date *</label>
+            <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="input" />
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Description</label>

@@ -31,13 +31,14 @@ router.get('/balance', async (req, res) => {
 // POST /api/savings/deposit
 router.post('/deposit', async (req, res) => {
   try {
-    const { amount, description } = req.body
+    const { amount, description, date } = req.body
     const cents = Math.round(parseFloat(amount) * 100)
     if (!cents) return res.status(400).json({ error: 'Amount required' })
 
+    const savedAt = date ? new Date(date).toISOString() : new Date().toISOString()
     const entry = await queryInsert(
-      'INSERT INTO savings (amount_cents, description) VALUES ($1, $2) RETURNING *',
-      [cents, description || 'Deposit']
+      'INSERT INTO savings (amount_cents, description, saved_at) VALUES ($1, $2, $3) RETURNING *',
+      [cents, description || 'Deposit', savedAt]
     )
     res.json({ data: entry })
   } catch (err) {
@@ -49,7 +50,7 @@ router.post('/deposit', async (req, res) => {
 // POST /api/savings/withdraw
 router.post('/withdraw', async (req, res) => {
   try {
-    const { amount, description } = req.body
+    const { amount, description, date } = req.body
     const cents = Math.round(parseFloat(amount) * 100)
     if (!cents) return res.status(400).json({ error: 'Amount required' })
 
@@ -58,9 +59,10 @@ router.post('/withdraw', async (req, res) => {
     const balance = parseInt(balanceRow.balance)
     if (cents > balance) return res.status(400).json({ error: 'Insufficient savings balance' })
 
+    const savedAt = date ? new Date(date).toISOString() : new Date().toISOString()
     const entry = await queryInsert(
-      'INSERT INTO savings (amount_cents, description) VALUES ($1, $2) RETURNING *',
-      [-cents, description || 'Withdrawal']
+      'INSERT INTO savings (amount_cents, description, saved_at) VALUES ($1, $2, $3) RETURNING *',
+      [-cents, description || 'Withdrawal', savedAt]
     )
     res.json({ data: entry })
   } catch (err) {

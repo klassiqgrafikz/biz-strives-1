@@ -3,6 +3,7 @@ import { api } from '../lib/api'
 import StatCard from '../components/StatCard'
 
 const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export default function Dashboard() {
   const [data, setData] = useState({ income: 0, expenses: 0, savings: 0, net: 0, savingsBalance: 0 })
@@ -10,7 +11,7 @@ export default function Dashboard() {
   const [recentExpenses, setRecentExpenses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [incomeForm, setIncomeForm] = useState({ amount: '', note: '' })
+  const [incomeForm, setIncomeForm] = useState({ amount: '', note: '', date: todayStr() })
   const [incomeSaving, setIncomeSaving] = useState(false)
 
   useEffect(() => {
@@ -43,8 +44,8 @@ export default function Dashboard() {
     }
     setIncomeSaving(true)
     try {
-      await api.post('/payments/income', { amount, note: incomeForm.note })
-      setIncomeForm({ amount: '', note: '' })
+      await api.post('/payments/income', { amount, note: incomeForm.note, received_at: incomeForm.date })
+      setIncomeForm({ amount: '', note: '', date: todayStr() })
       setLoading(true)
       await loadData()
     } catch (err) {
@@ -84,6 +85,15 @@ export default function Dashboard() {
               placeholder="Note (e.g. Salary 02 Sep)"
               value={incomeForm.note}
               onChange={e => setIncomeForm({ ...incomeForm, note: e.target.value })}
+              className="input w-full"
+            />
+          </div>
+          <div className="w-full sm:w-40">
+            <input
+              type="date"
+              required
+              value={incomeForm.date}
+              onChange={e => setIncomeForm({ ...incomeForm, date: e.target.value })}
               className="input w-full"
             />
           </div>

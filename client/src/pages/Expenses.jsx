@@ -3,12 +3,13 @@ import { api } from '../lib/api'
 import Modal from '../components/Modal'
 
 const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ category: '', amount: '', description: '' })
+  const [form, setForm] = useState({ category: '', amount: '', description: '', date: todayStr() })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => loadExpenses(), [])
@@ -26,13 +27,18 @@ export default function Expenses() {
 
   const openAdd = () => {
     setEditing(null)
-    setForm({ category: '', amount: '', description: '' })
+    setForm({ category: '', amount: '', description: '', date: todayStr() })
     setShowModal(true)
   }
 
   const openEdit = (e) => {
     setEditing(e)
-    setForm({ category: e.category, amount: (e.amount_cents / 100).toFixed(2), description: e.description || '' })
+    setForm({
+      category: e.category,
+      amount: (e.amount_cents / 100).toFixed(2),
+      description: e.description || '',
+      date: e.spent_at ? new Date(e.spent_at).toISOString().slice(0, 10) : todayStr()
+    })
     setShowModal(true)
   }
 
@@ -119,6 +125,10 @@ export default function Expenses() {
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Amount (₦) *</label>
             <input type="number" step="0.01" min="0.01" name="amount" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required className="input" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Date *</label>
+            <input type="date" name="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="input" />
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Description</label>

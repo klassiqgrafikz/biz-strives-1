@@ -3,13 +3,14 @@ import { api } from '../lib/api'
 import Modal from '../components/Modal'
 
 const fmtNaira = (cents) => '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export default function Payments() {
   const [payments, setPayments] = useState([])
   const [customers, setCustomers] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ customer_id: '', amount: '', method: 'bank_transfer', note: '' })
+  const [form, setForm] = useState({ customer_id: '', amount: '', method: 'bank_transfer', note: '', date: todayStr() })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,13 +37,19 @@ export default function Payments() {
 
   const openAdd = () => {
     setEditing(null)
-    setForm({ customer_id: '', amount: '', method: 'bank_transfer', note: '' })
+    setForm({ customer_id: '', amount: '', method: 'bank_transfer', note: '', date: todayStr() })
     setShowModal(true)
   }
 
   const openEdit = (p) => {
     setEditing(p)
-    setForm({ customer_id: p.customer_id, amount: (p.amount_cents / 100).toFixed(2), method: p.method, note: p.note || '' })
+    setForm({
+      customer_id: p.customer_id,
+      amount: (p.amount_cents / 100).toFixed(2),
+      method: p.method,
+      note: p.note || '',
+      date: p.received_at ? new Date(p.received_at).toISOString().slice(0, 10) : todayStr()
+    })
     setShowModal(true)
   }
 
@@ -133,6 +140,10 @@ export default function Payments() {
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Amount (₦) *</label>
             <input type="number" step="0.01" min="0.01" name="amount" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required className="input" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-muted mb-1">Date *</label>
+            <input type="date" name="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="input" />
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Method</label>
