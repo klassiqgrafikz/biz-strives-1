@@ -4,10 +4,13 @@ import { api } from '../lib/api'
 export default function Settings() {
   const [settings, setSettings] = useState({})
   const [gmailAppPassword, setGmailAppPassword] = useState('')
+  const [gmailClientSecret, setGmailClientSecret] = useState('')
   const [showAppPassword, setShowAppPassword] = useState(false)
+  const [showClientSecret, setShowClientSecret] = useState(false)
   const [saved, setSaved] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
+  const [connecting, setConnecting] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -33,12 +36,43 @@ export default function Settings() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword })
+      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword, gmail_client_secret: gmailClientSecret })
       setGmailAppPassword('')
+      setGmailClientSecret('')
       setSaved(true)
+      loadSettings()
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       alert(err.message)
+    }
+  }
+
+  const handleConnectGmail = async () => {
+    setConnecting(true)
+    setTestResult(null)
+    try {
+      const res = await api.get('/settings/oauth/url')
+      const popup = window.open(res.url, 'gmailConnect', 'width=620,height=720')
+      let connected = false
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 2000))
+        const status = await api.get('/settings/gmail-status')
+        if (status.connected) {
+          connected = true
+          break
+        }
+      }
+      if (!connected && popup && !popup.closed) popup.close()
+      if (connected) {
+        loadSettings()
+        setTestResult({ ok: true, message: 'Gmail API connected successfully!' })
+      } else {
+        setTestResult({ ok: false, message: 'Timed out waiting for authorization. If it failed, check that the redirect URI is registered in Google Cloud.' })
+      }
+    } catch (err) {
+      setTestResult({ ok: false, message: err.message })
+    } finally {
+      setConnecting(false)
     }
   }
 
@@ -139,8 +173,70 @@ export default function Settings() {
 
         <div className="card">
           <div className="p-4 border-b border-brand-border">
-            <h2 className="text-lg font-semibold">Automation Schedule</h2>
+            <h2 className="text-lg font-semibold">Gmail API (Google OAuth) — Recommended</h2>
           </div>
+          <div className="p-4 space-y-4">
+            {settings.gmail_api_connected ? (
+              <div className="bg-brand-lime bg-opacity-20 border border-brand-lime border-opacity-40 rounded-md p-3">
+                <p className="text-sm text-brand-lime">
+                  <span className="font-medium">✓ Gmail API connected.</span> Emails are now sent over HTTPS directly to Gmail — no SMTP needed, works on Render.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-brand-pink bg-opacity-20 border border-brand-pink border-opacity-40 rounded-md p-3">
+                <p className="text-sm text-pink-400">
+                  <span className="font-medium">SMTP is blocked on Render's free tier</span> (both ports 587 and 465 time out). Connecting the Gmail API fixes this permanently. You need a Google Cloud project with the Gmail API enabled and an OAuth Client ID (Web application).
+                </p>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-brand-muted mb-1">Gmail Client ID</label>
+              <input name="gmail_client_id" value={settings.gmail_client_id || ''} onChange={handleChange} className="input" placeholder="1234567890-xxxx.apps.googleusercontent.com" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-brand-muted mb-1">Gmail Client Secret</label>
+              <div className="relative">
+                <input
+                  name="gmail_client_secret"
+                  type={showClientSecret ? 'text' : 'password'}
+                  value={gmailClientSecret}
+                  onChange={e => setGmailClientSecret(e.target.value)}
+                  className="input w-full pr-10"
+                  placeholder="Leave blank to keep your current secret"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowClientSecret(v => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-muted hover:text-brand-text"
+                  aria-label={showClientSecret ? 'Hide client secret' : 'Show client secret'}
+                >
+                  {showClientSecret ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-brand-muted">From Google Cloud → APIs &amp; Services → Credentials. Save your changes first, then click Connect.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={handleConnectGmail} disabled={connecting} className="btn btn-cta disabled:opacity-50">
+                {connecting ? 'Waiting for authorization...' : 'Connect Gmail API'}
+              </button>
+              {testResult && (
+                <p className={`text-sm ${testResult.ok ? 'text-brand-lime' : 'text-pink-500'}`}>
+                  {testResult.ok ? '✓ ' + testResult.message : '✗ ' + testResult.message}
+                </p>
+              )}
+            </div>
+            <p className="text-xs text-brand-muted">
+              Register this redirect URI in your Google Cloud Client ID (APIs &amp; Services → Credentials → edit the Web client → Authorized redirect URIs): <code className="text-brand-pink">https://biz-strives-api.onrender.com/api/settings/oauth/callback</code> — or <code className="text-brand-pink">http://localhost:3001/api/settings/oauth/callback</code> when testing locally.
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
           <div className="p-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>

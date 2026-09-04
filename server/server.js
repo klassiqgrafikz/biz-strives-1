@@ -32,6 +32,9 @@ const PREV_DEFAULTS = {
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Render/Caddy sit behind a reverse proxy — trust it so req.protocol is https
+app.set('trust proxy', 1)
+
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map((s) => s.trim())
@@ -111,7 +114,19 @@ async function seedDefaults() {
   }
 }
 
+async function ensureSettingsColumns() {
+  try {
+    await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gmail_client_id TEXT DEFAULT ''`)
+    await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gmail_client_secret TEXT DEFAULT ''`)
+    await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gmail_refresh_token TEXT DEFAULT ''`)
+    console.log('[DB] Ensured settings OAuth columns')
+  } catch (err) {
+    console.error('[DB] ensureSettingsColumns failed:', err.message)
+  }
+}
+
 const server = app.listen(PORT, async () => {
+  await ensureSettingsColumns()
   await runCatchUp()
   await seedDefaults()
   scheduleJobs()
