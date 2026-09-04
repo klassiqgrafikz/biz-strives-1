@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import nodemailer from 'nodemailer'
 import { requireAuth } from '../routes/auth.js'
 import { queryOne, queryExec } from '../db/pool.js'
+import { sendEmail } from '../lib/email.js'
 
 const router = Router()
 
@@ -17,51 +17,14 @@ router.post('/test-email', async (req, res) => {
     const to = req.body.to || settings.statement_email || settings.gmail_user
     if (!to) return res.status(400).json({ error: 'No recipient email available' })
 
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      connectionTimeout: 45000,
-      greetingTimeout: 30000,
-      socketTimeout: 90000,
-      auth: {
-        user: settings.gmail_user,
-        pass: settings.gmail_app_password
-      }
-    })
+    const result = await sendEmail(to, `Test Email from ${settings.brand_name}`,
+      `<p>This is a test email from <strong>${settings.brand_name}</strong>.</p><p>If you received this, your Gmail settings are working correctly.</p>`)
 
-    const isPostAcceptanceError = (err) => {
-      const code = (err && err.code) || ''
-      const msg = `${err && (err.response || err.message || '')}`
-      const noResponseCode = !err || !err.responseCode
-      const isConnErr = /ETIMEDOUT|ESOCKET|ECONNRESET|ECONNECTION|Connection.*(timeout|closed|reset)/i.test(code + ' ' + msg)
-      return isConnErr && noResponseCode
+    if (result.sent) {
+      res.json({ message: 'Test email sent successfully' })
+    } else {
+      res.status(400).json({ error: `Email send failed: ${result.message || 'Check Render logs'}` })
     }
-
-    let lastErr
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        await transporter.sendMail({
-          from: `"${settings.brand_name}" <${settings.gmail_user}>`,
-          to,
-          subject: `Test Email from ${settings.brand_name}`,
-          text: 'This is a test email to confirm your Gmail settings are working correctly.',
-          html: `<p>This is a test email from <strong>${settings.brand_name}</strong>.</p><p>If you received this, your Gmail settings are working correctly.</p>`
-        })
-        return res.json({ message: 'Test email sent successfully' })
-      } catch (err) {
-        lastErr = err
-        if (isPostAcceptanceError(err)) {
-          console.warn('POST /settings/test-email likely delivered (teardown error) attempt', attempt, err.message)
-          return res.json({ message: 'Test email sent (was possibly delivered despite a connection warning)' })
-        }
-        if (err.responseCode && err.responseCode >= 400) break
-        console.warn('POST /settings/test-email attempt', attempt, 'failed:', err.message)
-        if (attempt < 3) await new Promise(r => setTimeout(r, 1500 * attempt))
-      }
-    }
-    console.error('POST /settings/test-email SMTP error:', lastErr && (lastErr.response || lastErr.message))
-    res.status(400).json({ error: `Email send failed: ${lastErr && (lastErr.response || lastErr.message)}` })
   } catch (err) {
     console.error('POST /settings/test-email error:', err)
     res.status(500).json({ error: 'Failed to send test email' })

@@ -1,58 +1,11 @@
 import { Router } from 'express'
-import nodemailer from 'nodemailer'
 import { requireAuth } from '../routes/auth.js'
 import { queryOne, queryAll, queryInsert } from '../db/pool.js'
+import { sendEmail } from '../lib/email.js'
 
 const router = Router()
 
 router.use(requireAuth)
-
-const isPostAcceptanceError = (err) => {
-  const code = (err && err.code) || ''
-  const msg = `${err && (err.response || err.message || '')}`
-  const noResponseCode = !err || !err.responseCode
-  const isConnErr = /ETIMEDOUT|ESOCKET|ECONNRESET|ECONNECTION|Connection.*(timeout|closed|reset)/i.test(code + ' ' + msg)
-  return isConnErr && noResponseCode
-}
-
-async function sendEmailOne(settings, to, subject, html) {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    connectionTimeout: 45000,
-    greetingTimeout: 30000,
-    socketTimeout: 90000,
-    auth: {
-      user: settings.gmail_user,
-      pass: settings.gmail_app_password
-    }
-  })
-
-  let lastErr
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const info = await transporter.sendMail({
-        from: `"${settings.brand_name}" <${settings.gmail_user}>`,
-        to,
-        subject,
-        html
-      })
-      console.log('[NOTIFY] Accepted by Gmail, messageId:', info.messageId)
-      return { status: 'sent' }
-    } catch (err) {
-      lastErr = err
-      if (isPostAcceptanceError(err)) {
-        console.warn('[NOTIFY] Post-acceptance error, likely delivered to:', to)
-        return { status: 'sent' }
-      }
-      if (err.responseCode && err.responseCode >= 400) break
-      if (attempt < 3) await new Promise(r => setTimeout(r, 1500 * attempt))
-    }
-  }
-  console.error('[NOTIFY] Send failed to:', to, '-', lastErr && (lastErr.response || lastErr.message))
-  return { status: 'failed' }
-}
 
 function cleanContentEditableHtml(dirty) {
   let clean = dirty
@@ -118,9 +71,6 @@ router.post('/broadcast', async (req, res) => {
     }
 
     const settings = await queryOne('SELECT * FROM settings WHERE id = 1')
-    if (!settings.gmail_user || !settings.gmail_app_password) {
-      return res.status(400).json({ error: 'Gmail details not configured yet' })
-    }
 
     let customers
     if (recipientIds && recipientIds.length > 0) {
@@ -145,9 +95,8 @@ router.post('/broadcast', async (req, res) => {
     const failures = []
 
     for (const c of customers) {
-      const personalized = wrappedHtml
-      const result = await sendEmailOne(settings, c.email, subject, personalized)
-      if (result.status === 'sent') {
+      const result = await sendEmail(c.email, subject, wrappedHtml)
+      if (result.sent) {
         results.sent++
         await queryInsert(
           'INSERT INTO message_log (customer_id, type, status) VALUES ($1, $2, $3)',
