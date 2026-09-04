@@ -9,7 +9,7 @@ import { queryOne, queryAll, queryExec, queryInsert } from '../db/pool.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const BIRTHDAY_HEADER_PATH = path.join(__dirname, '..', 'assets', 'birthday-header.png')
+const BIRTHDAY_HEADER_PATH = path.join(__dirname, '..', 'assets', 'birthday-header.jpg')
 
 function plainToHtml(text) {
   if (/<[a-z][\s\S]*>/i.test(text)) return text
@@ -174,7 +174,7 @@ export async function runBirthdayJob() {
 
   let birthdayAttachments
   if (fs.existsSync(BIRTHDAY_HEADER_PATH)) {
-    birthdayAttachments = [{ filename: 'birthday-header.png', path: BIRTHDAY_HEADER_PATH, cid: 'birthday-header' }]
+    birthdayAttachments = [{ filename: 'birthday-header.jpg', path: BIRTHDAY_HEADER_PATH, cid: 'birthday-header' }]
   }
 
   for (const c of customers) {
