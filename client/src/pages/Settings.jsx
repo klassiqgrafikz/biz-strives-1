@@ -4,7 +4,10 @@ import { api } from '../lib/api'
 export default function Settings() {
   const [settings, setSettings] = useState({})
   const [gmailAppPassword, setGmailAppPassword] = useState('')
+  const [showAppPassword, setShowAppPassword] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,6 +39,19 @@ export default function Settings() {
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
       alert(err.message)
+    }
+  }
+
+  const handleTestEmail = async () => {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const res = await api.post('/settings/test-email', { to: settings.statement_email })
+      setTestResult({ ok: true, message: res.message })
+    } catch (err) {
+      setTestResult({ ok: false, message: err.message })
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -83,16 +99,40 @@ export default function Settings() {
             </div>
             <div>
               <label className="block text-sm font-medium text-brand-muted mb-1">Gmail App Password</label>
-              <input
-                name="gmail_app_password"
-                type="password"
-                value={gmailAppPassword}
-                onChange={e => setGmailAppPassword(e.target.value)}
-                className="input"
-                placeholder="Enter your app password to update"
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <input
+                  name="gmail_app_password"
+                  type={showAppPassword ? 'text' : 'password'}
+                  value={gmailAppPassword}
+                  onChange={e => setGmailAppPassword(e.target.value)}
+                  className="input w-full pr-10"
+                  placeholder="Enter your app password to update"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAppPassword(v => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-muted hover:text-brand-text"
+                  aria-label={showAppPassword ? 'Hide app password' : 'Show app password'}
+                >
+                  {showAppPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-brand-muted">Generate at <a href="https://myaccount.google.com/apppasswords" target="_blank" className="text-brand-pink hover:underline">myaccount.google.com/apppasswords</a> — leave blank to keep your current password.</p>
+            </div>
+            <div>
+              <button type="button" onClick={handleTestEmail} disabled={testing} className="btn btn-cta disabled:opacity-50">
+                {testing ? 'Sending test...' : 'Send Test Email'}
+              </button>
+              {testResult && (
+                <p className={`mt-2 text-sm ${testResult.ok ? 'text-brand-lime' : 'text-pink-500'}`}>
+                  {testResult.ok ? '✓ ' + testResult.message : '✗ ' + testResult.message}
+                </p>
+              )}
             </div>
           </div>
         </div>

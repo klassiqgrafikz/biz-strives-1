@@ -1,10 +1,50 @@
 import { Router } from 'express'
+import nodemailer from 'nodemailer'
 import { requireAuth } from '../routes/auth.js'
 import { queryOne, queryExec } from '../db/pool.js'
 
 const router = Router()
 
 router.use(requireAuth)
+
+// POST /api/settings/test-email - send a test email using saved Gmail credentials
+router.post('/test-email', async (req, res) => {
+  try {
+    const settings = await queryOne('SELECT * FROM settings WHERE id = 1')
+    if (!settings.gmail_user || !settings.gmail_app_password) {
+      return res.status(400).json({ error: 'Gmail details not configured yet' })
+    }
+    const to = req.body.to || settings.statement_email || settings.gmail_user
+    if (!to) return res.status(400).json({ error: 'No recipient email available' })
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: settings.gmail_user,
+        pass: settings.gmail_app_password
+      }
+    })
+
+    try {
+      await transporter.sendMail({
+        from: `"${settings.brand_name}" <${settings.gmail_user}>`,
+        to,
+        subject: `Test Email from ${settings.brand_name}`,
+        text: 'This is a test email to confirm your Gmail settings are working correctly.',
+        html: `<p>This is a test email from <strong>${settings.brand_name}</strong>.</p><p>If you received this, your Gmail settings are working correctly.</p>`
+      })
+      res.json({ message: 'Test email sent successfully' })
+    } catch (err) {
+      console.error('POST /settings/test-email SMTP error:', err.response || err.message)
+      res.status(400).json({ error: `Email send failed: ${err.response || err.message}` })
+    }
+  } catch (err) {
+    console.error('POST /settings/test-email error:', err)
+    res.status(500).json({ error: 'Failed to send test email' })
+  }
+})
 
 // GET /api/settings
 router.get('/', async (req, res) => {
