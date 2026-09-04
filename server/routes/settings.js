@@ -21,6 +21,9 @@ router.post('/test-email', async (req, res) => {
       host: 'smtp.gmail.com',
       port: 587,
       secure: false,
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
       auth: {
         user: settings.gmail_user,
         pass: settings.gmail_app_password
