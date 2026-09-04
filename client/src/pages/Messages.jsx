@@ -214,8 +214,15 @@ export default function Messages() {
       </div>
 
       <div className="card">
-        <div className="p-4 border-b border-brand-border">
-          <h2 className="text-lg font-semibold">Recent Messages</h2>
+        <div className="p-4 border-b border-brand-border flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Messages</h2>
+            {log.length > 0 && (
+              <button onClick={async () => {
+                if (!confirm('Delete all messages?')) return
+                await api.delete('/messages/log')
+                setLog([])
+              }} className="text-sm text-pink-500 hover:text-pink-400">Delete All</button>
+            )}
         </div>
         <div className="divide-y divide-brand-border">
 {log.length === 0 ? (

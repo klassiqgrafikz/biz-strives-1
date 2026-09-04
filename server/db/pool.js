@@ -2,6 +2,10 @@ import pg from 'pg'
 
 const { Pool } = pg
 
+// Return DATE columns as raw YYYY-MM-DD strings instead of Date objects
+// This prevents timezone shifts (e.g. 09/04 showing as 09/03 in UTC+1)
+pg.types.setTypeParser(1082, val => val)
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },

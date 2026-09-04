@@ -23,4 +23,15 @@ router.get('/log', async (req, res) => {
   }
 })
 
+// DELETE /api/messages/log
+router.delete('/log', async (req, res) => {
+  try {
+    await queryExec('DELETE FROM message_log')
+    res.json({ message: 'All messages cleared' })
+  } catch (err) {
+    console.error('DELETE /messages/log error:', err)
+    res.status(500).json({ error: 'Failed to clear messages' })
+  }
+})
+
 export default router
