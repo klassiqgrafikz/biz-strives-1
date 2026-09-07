@@ -152,7 +152,7 @@ router.post('/broadcast', broadcastUpload, async (req, res) => {
       const resized = await resizeAndSaveImage(uploadedFile.buffer, uploadedFile.originalname)
       imagePath = resized.path
       imageCid = 'notification-image'
-      attachments = [{ filename: resized.filename, path: resized.path, cid: imageCid }]
+      attachments = [{ filename: 'notification-image.jpg', path: resized.path, cid: imageCid, contentDisposition: 'inline' }]
     }
 
     const wrappedHtml = buildNotificationHtml(cleaned, settings.brand_name, imageCid, imagePlacement || 'header')

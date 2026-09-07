@@ -109,7 +109,7 @@ export async function runBirthdayJob() {
 
   let birthdayAttachments
   if (fs.existsSync(BIRTHDAY_HEADER_PATH)) {
-    birthdayAttachments = [{ filename: 'birthday-header.jpg', path: BIRTHDAY_HEADER_PATH, cid: 'birthday-header' }]
+    birthdayAttachments = [{ filename: 'birthday-header.jpg', path: BIRTHDAY_HEADER_PATH, cid: 'birthday-header', contentDisposition: 'inline' }]
   }
 
   for (const c of customers) {
