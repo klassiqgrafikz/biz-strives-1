@@ -87,9 +87,7 @@ export default function Notifications() {
         formData.append('image', imageFile)
       }
 
-      const res = await api.post('/notifications/broadcast', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      const res = await api.post('/notifications/broadcast', formData)
       setResult(res.results)
       setImageFile(null)
       setImagePreview(null)
