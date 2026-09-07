@@ -1,11 +1,21 @@
 import { Router } from 'express'
+import multer from 'multer'
 import { requireAuth } from '../routes/auth.js'
 import { queryOne, queryAll, queryInsert } from '../db/pool.js'
 import { sendEmail } from '../lib/email.js'
+import { resizeAndSaveImage, deleteImage, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '../lib/imageUtils.js'
 
 const router = Router()
 
 router.use(requireAuth)
+
+const upload = multer({
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) cb(null, true)
+    else cb(new Error('Only JPEG, PNG, and WebP images are allowed'))
+  }
+})
 
 function cleanContentEditableHtml(dirty) {
   let clean = dirty
@@ -22,7 +32,40 @@ function cleanContentEditableHtml(dirty) {
   return clean.trim()
 }
 
-function buildNotificationHtml(body, brandName) {
+function buildNotificationHtml(body, brandName, imageCid, imagePlacement) {
+  const imageHtml = imageCid
+    ? `<tr><td><img src="cid:${imageCid}" width="600" style="display:block;width:100%;max-width:600px;height:auto;border-radius:8px 8px 0 0;" alt=""></td></tr>`
+    : ''
+
+  const imageInsideHtml = imageCid
+    ? `<p style="margin:0 0 20px;text-align:center;"><img src="cid:${imageCid}" width="600" style="max-width:100%;height:auto;border-radius:4px;" alt=""></p>`
+    : ''
+
+  if (imagePlacement === 'header') {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:20px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:8px;overflow:hidden;">
+${imageHtml}
+<tr><td style="background-color:#ff2d78;padding:20px 30px;text-align:center;">
+<h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">${brandName}</h1>
+</td></tr>
+<tr><td style="padding:30px 40px;color:#333333;font-size:15px;line-height:1.7;">
+${body}
+</td></tr>
+<tr><td style="padding:0 40px 30px;"><hr style="border:none;border-top:1px solid #eee;margin:0;"></td></tr>
+<tr><td style="padding:0 40px 20px;text-align:center;">
+<p style="margin:0;font-size:12px;color:#999999;">This message was sent by ${brandName}</p>
+</td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>`
+  }
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -34,6 +77,7 @@ function buildNotificationHtml(body, brandName) {
 <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:600;">${brandName}</h1>
 </td></tr>
 <tr><td style="padding:30px 40px;color:#333333;font-size:15px;line-height:1.7;">
+${imageInsideHtml}
 ${body}
 </td></tr>
 <tr><td style="padding:0 40px 30px;"><hr style="border:none;border-top:1px solid #eee;margin:0;"></td></tr>
@@ -60,9 +104,10 @@ router.get('/recipients', async (req, res) => {
 })
 
 // POST /api/notifications/broadcast - send an HTML email to all customers
-router.post('/broadcast', async (req, res) => {
+router.post('/broadcast', upload.single('image'), async (req, res) => {
+  let imagePath = null
   try {
-    const { subject, html, recipientIds } = req.body
+    const { subject, html, recipientIds, imagePlacement } = req.body
     if (!subject || !subject.trim()) {
       return res.status(400).json({ error: 'Subject is required' })
     }
@@ -89,13 +134,23 @@ router.post('/broadcast', async (req, res) => {
     }
 
     const cleaned = cleanContentEditableHtml(html)
-    const wrappedHtml = buildNotificationHtml(cleaned, settings.brand_name)
+
+    let attachments = []
+    let imageCid = null
+    if (req.file) {
+      const resized = await resizeAndSaveImage(req.file.buffer, req.file.originalname)
+      imagePath = resized.path
+      imageCid = 'notification-image'
+      attachments = [{ filename: resized.filename, path: resized.path, cid: imageCid }]
+    }
+
+    const wrappedHtml = buildNotificationHtml(cleaned, settings.brand_name, imageCid, imagePlacement || 'header')
 
     const results = { sent: 0, failed: 0 }
     const failures = []
 
     for (const c of customers) {
-      const result = await sendEmail(c.email, subject, wrappedHtml)
+      const result = await sendEmail(c.email, subject.trim(), wrappedHtml, attachments)
       if (result.sent) {
         results.sent++
         await queryInsert(
@@ -108,6 +163,8 @@ router.post('/broadcast', async (req, res) => {
       }
     }
 
+    if (imagePath) deleteImage(imagePath)
+
     res.json({
       message: `Broadcast complete`,
       results,
@@ -115,7 +172,8 @@ router.post('/broadcast', async (req, res) => {
     })
   } catch (err) {
     console.error('POST /notifications/broadcast error:', err)
-    res.status(500).json({ error: 'Failed to send notifications' })
+    if (imagePath) deleteImage(imagePath)
+    res.status(500).json({ error: err.message || 'Failed to send notifications' })
   }
 })
 

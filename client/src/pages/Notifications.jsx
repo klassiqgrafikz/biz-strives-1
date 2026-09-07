@@ -10,6 +10,9 @@ export default function Notifications() {
   const [result, setResult] = useState(null)
   const [selectAll, setSelectAll] = useState(true)
   const [selected, setSelected] = useState({})
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [imagePlacement, setImagePlacement] = useState('header') // 'header' or 'inside'
   const editorRef = useRef(null)
 
   useEffect(() => {
@@ -75,17 +78,47 @@ export default function Notifications() {
     setSending(true)
     setResult(null)
     try {
-      const res = await api.post('/notifications/broadcast', {
-        subject: subject.trim(),
-        html: html,
-        recipientIds: selectedIds
+      const formData = new FormData()
+      formData.append('subject', subject.trim())
+      formData.append('html', html)
+      formData.append('recipientIds', JSON.stringify(selectedIds))
+      formData.append('imagePlacement', imagePlacement)
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+
+      const res = await api.post('/notifications/broadcast', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
       setResult(res.results)
+      setImageFile(null)
+      setImagePreview(null)
     } catch (err) {
       alert(err.message)
     } finally {
       setSending(false)
     }
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Only JPEG, PNG, and WebP images are allowed')
+      return
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Image must be less than 3MB')
+      return
+    }
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+    setImagePreview(null)
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-muted">Loading...</div>
@@ -124,6 +157,38 @@ export default function Notifications() {
                   className="input w-full"
                   placeholder="e.g. Important Update from Klassiq Grafikz"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brand-muted mb-1">Image (optional)</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <label className="btn btn-secondary cursor-pointer">
+                      Choose Image
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="hidden" />
+                    </label>
+                    {imagePreview && (
+                      <button type="button" onClick={removeImage} className="btn btn-ghost text-pink-500 hover:bg-pink-500 hover:bg-opacity-10" title="Remove image">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
+                    )}
+                  </div>
+                  {imagePreview && (
+                    <div className="relative w-full max-w-md">
+                      <img src={imagePreview} alt="Preview" className="w-full h-auto rounded border border-brand-border" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="imagePlacement" value="header" checked={imagePlacement === 'header'} onChange={() => setImagePlacement('header')} className="h-4 w-4 text-brand-pink" />
+                      <span className="text-sm text-brand-text">Above brand header (banner)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="imagePlacement" value="inside" checked={imagePlacement === 'inside'} onChange={() => setImagePlacement('inside')} className="h-4 w-4 text-brand-pink" />
+                      <span className="text-sm text-brand-text">Inside message body</span>
+                    </label>
+                  </div>
+                  <p className="text-xs text-brand-muted">Auto-resized to max 600×400px, JPEG. Deleted after sending.</p>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-muted mb-1">Message *</label>
