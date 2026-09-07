@@ -114,13 +114,11 @@ router.get('/recipients', async (req, res) => {
 
 // POST /api/notifications/broadcast - send an HTML email to all customers
 router.post('/broadcast', broadcastUpload, async (req, res) => {
-  console.log('[BROADCAST] req.body:', req.body);
-  console.log('[BROADCAST] req.files:', req.files);
   let imagePath = null
   try {
     const { subject, html, recipientIds, imagePlacement } = req.body
+    const parsedRecipientIds = recipientIds ? JSON.parse(recipientIds) : []
     if (!subject || !subject.trim()) {
-      console.log('[BROADCAST] Missing subject, body:', req.body);
       return res.status(400).json({ error: 'Subject is required' })
     }
     if (!html || !html.trim()) {
@@ -130,11 +128,11 @@ router.post('/broadcast', broadcastUpload, async (req, res) => {
     const settings = await queryOne('SELECT * FROM settings WHERE id = 1')
 
     let customers
-    if (recipientIds && recipientIds.length > 0) {
-      const placeholders = recipientIds.map((_, i) => `$${i + 1}`).join(',')
+    if (parsedRecipientIds && parsedRecipientIds.length > 0) {
+      const placeholders = parsedRecipientIds.map((_, i) => `$${i + 1}`).join(',')
       customers = await queryAll(
         `SELECT id, name, email FROM customers WHERE id IN (${placeholders}) AND email IS NOT NULL AND email <> ''`,
-        recipientIds
+        parsedRecipientIds
       )
     } else {
       customers = await queryAll(
