@@ -17,6 +17,15 @@ const upload = multer({
   }
 })
 
+// Use fields() to explicitly handle both file AND text fields
+const broadcastUpload = upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'subject', maxCount: 1 },
+  { name: 'html', maxCount: 1 },
+  { name: 'recipientIds', maxCount: 1 },
+  { name: 'imagePlacement', maxCount: 1 }
+])
+
 function cleanContentEditableHtml(dirty) {
   let clean = dirty
   clean = clean.replace(/<font[^>]*>/gi, '')
@@ -104,7 +113,7 @@ router.get('/recipients', async (req, res) => {
 })
 
 // POST /api/notifications/broadcast - send an HTML email to all customers
-router.post('/broadcast', upload.single('image'), async (req, res) => {
+router.post('/broadcast', broadcastUpload, async (req, res) => {
   let imagePath = null
   try {
     const { subject, html, recipientIds, imagePlacement } = req.body
@@ -137,8 +146,9 @@ router.post('/broadcast', upload.single('image'), async (req, res) => {
 
     let attachments = []
     let imageCid = null
-    if (req.file) {
-      const resized = await resizeAndSaveImage(req.file.buffer, req.file.originalname)
+    const uploadedFile = req.files?.image?.[0]
+    if (uploadedFile) {
+      const resized = await resizeAndSaveImage(uploadedFile.buffer, uploadedFile.originalname)
       imagePath = resized.path
       imageCid = 'notification-image'
       attachments = [{ filename: resized.filename, path: resized.path, cid: imageCid }]
