@@ -114,10 +114,13 @@ router.get('/recipients', async (req, res) => {
 
 // POST /api/notifications/broadcast - send an HTML email to all customers
 router.post('/broadcast', broadcastUpload, async (req, res) => {
+  console.log('[BROADCAST] req.body:', req.body);
+  console.log('[BROADCAST] req.files:', req.files);
   let imagePath = null
   try {
     const { subject, html, recipientIds, imagePlacement } = req.body
     if (!subject || !subject.trim()) {
+      console.log('[BROADCAST] Missing subject, body:', req.body);
       return res.status(400).json({ error: 'Subject is required' })
     }
     if (!html || !html.trim()) {
