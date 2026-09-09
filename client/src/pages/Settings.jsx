@@ -36,7 +36,7 @@ export default function Settings() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword, gmail_client_secret: gmailClientSecret })
+      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword, gmail_client_secret: gmailClientSecret, account_number: settings.account_number })
       setGmailAppPassword('')
       setGmailClientSecret('')
       setSaved(true)
@@ -117,6 +117,11 @@ export default function Settings() {
               <label className="block text-sm font-medium text-brand-muted mb-1">Statement Email</label>
               <input name="statement_email" type="email" value={settings.statement_email || ''} onChange={handleChange} className="input" />
               <p className="text-xs text-brand-muted">Email for monthly statements</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-brand-muted mb-1">Account Number (for PDF statements)</label>
+              <input name="account_number" value={settings.account_number || ''} onChange={handleChange} className="input" placeholder="e.g. 0123456789" />
+              <p className="text-xs text-brand-muted">Shown masked on statements (**** **** **** 1234)</p>
             </div>
           </div>
         </div>

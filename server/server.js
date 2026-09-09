@@ -119,7 +119,8 @@ async function ensureSettingsColumns() {
     await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gmail_client_id TEXT DEFAULT ''`)
     await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gmail_client_secret TEXT DEFAULT ''`)
     await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS gmail_refresh_token TEXT DEFAULT ''`)
-    console.log('[DB] Ensured settings OAuth columns')
+    await queryExec(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS account_number TEXT DEFAULT ''`)
+    console.log('[DB] Ensured settings OAuth columns + account_number')
   } catch (err) {
     console.error('[DB] ensureSettingsColumns failed:', err.message)
   }
