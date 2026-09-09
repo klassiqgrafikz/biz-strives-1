@@ -296,7 +296,7 @@ router.get('/pdf', async (req, res) => {
       doc.fontSize(7).font('Helvetica').fillColor('#333333')
       const values = [txnDate, valueDate, narration, reference, withdrawal, lodgment, balanceStr]
       values.forEach((v, i) => {
-        doc.text(v, x + 3, doc.y + 3, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left', ellipsis: true })
+        doc.text(v, x + 3, doc.y + 3, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left' })
         x += colWidths[i]
       })
       doc.fillColor('#000000')
