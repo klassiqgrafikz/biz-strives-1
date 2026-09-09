@@ -100,6 +100,7 @@ router.get('/', async (req, res) => {
     const { gmail_app_password, gmail_client_secret, gmail_refresh_token, ...safe } = settings
     safe.gmail_api_connected = !!(settings.gmail_client_id && settings.gmail_client_secret && settings.gmail_refresh_token)
     safe.account_number = settings.account_number || ''
+    safe.opening_balance_cents = settings.opening_balance_cents || 0
     res.json({ data: safe })
   } catch (err) {
     console.error('GET /settings error:', err)
@@ -122,7 +123,8 @@ router.put('/', async (req, res) => {
       gmail_app_password,
       gmail_client_id,
       gmail_client_secret,
-      account_number
+      account_number,
+      opening_balance_cents
     } = req.body
 
     let query = `
@@ -166,6 +168,11 @@ router.put('/', async (req, res) => {
     if (account_number !== undefined) {
       query += `, account_number = $${params.length + 1}`
       params.push(account_number.trim())
+    }
+
+    if (opening_balance_cents !== undefined) {
+      query += `, opening_balance_cents = $${params.length + 1}`
+      params.push(parseInt(opening_balance_cents) || 0)
     }
 
     query += ' WHERE id = 1 RETURNING *'

@@ -101,33 +101,52 @@ router.get('/pdf', async (req, res) => {
     const savingsTotal = savings.reduce((s, s_) => s + Number(s_.amount_cents), 0)
     const net = incomeTotal - expenseTotal - savingsTotal
 
-    const prevMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1)
-    const prevEnd = new Date(date.getFullYear(), date.getMonth(), 0, 23, 59, 59)
-    const prevPayments = await queryAll(
-      `SELECT p.amount_cents FROM payments p WHERE p.received_at BETWEEN $1 AND $2`,
-      [new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString(), prevEnd.toISOString()]
-    )
-    const prevExpenses = await queryAll(
-      'SELECT amount_cents FROM expenses WHERE spent_at BETWEEN $1 AND $2',
-      [new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString(), prevEnd.toISOString()]
-    )
-    const prevSavings = await queryAll(
-      'SELECT amount_cents FROM savings WHERE saved_at BETWEEN $1 AND $2',
-      [new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString(), prevEnd.toISOString()]
-    )
-    const prevIncomeTotal = prevPayments.reduce((s, p) => s + Number(p.amount_cents), 0)
-    const prevExpenseTotal = prevExpenses.reduce((s, e) => s + Number(e.amount_cents), 0)
-    const prevSavingsTotal = prevSavings.reduce((s, s_) => s + Number(s_.amount_cents), 0)
-    const openingBalance = prevIncomeTotal - prevExpenseTotal - prevSavingsTotal
+    const manualOpening = settings?.opening_balance_cents > 0 ? Number(settings.opening_balance_cents) : null
+    let openingBalance
+    if (manualOpening !== null) {
+      openingBalance = manualOpening
+    } else {
+      const prevMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1)
+      const prevEnd = new Date(date.getFullYear(), date.getMonth(), 0, 23, 59, 59)
+      const prevPayments = await queryAll(
+        `SELECT p.amount_cents FROM payments p WHERE p.received_at BETWEEN $1 AND $2`,
+        [new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString(), prevEnd.toISOString()]
+      )
+      const prevExpenses = await queryAll(
+        'SELECT amount_cents FROM expenses WHERE spent_at BETWEEN $1 AND $2',
+        [new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString(), prevEnd.toISOString()]
+      )
+      const prevSavings = await queryAll(
+        'SELECT amount_cents FROM savings WHERE saved_at BETWEEN $1 AND $2',
+        [new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString(), prevEnd.toISOString()]
+      )
+      const prevIncomeTotal = prevPayments.reduce((s, p) => s + Number(p.amount_cents), 0)
+      const prevExpenseTotal = prevExpenses.reduce((s, e) => s + Number(e.amount_cents), 0)
+      const prevSavingsTotal = prevSavings.reduce((s, s_) => s + Number(s_.amount_cents), 0)
+      openingBalance = prevIncomeTotal - prevExpenseTotal - prevSavingsTotal
+    }
     const closingBalance = openingBalance + net
 
-    function fmtDate(d) {
+    function toLagos(d) {
       const dt = d instanceof Date ? d : new Date(d)
-      return dt.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' }).replace(/ /g, '-')
+      return new Date(dt.getTime() + 3600000)
+    }
+
+    function fmtDate(d) {
+      const dt = toLagos(d)
+      const day = String(dt.getUTCDate()).padStart(2, '0')
+      const month = dt.toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' })
+      const year = dt.getUTCFullYear()
+      return `${day}-${month}-${year}`
+    }
+
+    function fmtTime(d) {
+      const dt = toLagos(d)
+      return dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
     }
 
     function fmtNairaFull(cents) {
-      return '₦' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      return 'NGN ' + (cents / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
 
     function maskAccount(num) {
@@ -156,143 +175,147 @@ router.get('/pdf', async (req, res) => {
     }
 
     const allTxns = [
-      ...payments.map((p, i) => ({ type: 'payment', date: p.received_at, amount: Number(p.amount_cents), data: p, index: i })),
-      ...expenses.map((e, i) => ({ type: 'expense', date: e.spent_at, amount: -Number(e.amount_cents), data: e, index: i })),
-      ...savings.map((s, i) => ({ type: 'savings', date: s.saved_at, amount: Number(s.amount_cents), data: s, index: i }))
+      ...payments.map((p, i) => ({ type: 'payment', date: p.received_at, amount: Number(p.amount_cents), data: p })),
+      ...expenses.map((e, i) => ({ type: 'expense', date: e.spent_at, amount: -Number(e.amount_cents), data: e })),
+      ...savings.map((s, i) => ({ type: 'savings', date: s.saved_at, amount: Number(s.amount_cents), data: s }))
     ].sort((a, b) => new Date(a.date) - new Date(b.date))
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' })
     const chunks = []
 
-    await new Promise((resolve, reject) => {
-      doc.on('data', c => chunks.push(c))
-      doc.on('end', resolve)
-      doc.on('error', reject)
+    const pageWidth = doc.page.width - 80
+    const colWidths = [55, 55, 120, 70, 65, 65, 65]
+    const tableLeft = 40
+    const rowHeight = 18
+    const headerHeight = 22
+    const footerReserve = 30
+    const pageBottom = doc.page.height - 40 - footerReserve
 
-      const pageWidth = doc.page.width - 80
-      const colWidths = [65, 65, 150, 85, 75, 75, 75]
-      const tableLeft = 40
+    let pageCount = 1
 
-      function drawHeader() {
-        doc.fontSize(16).font('Helvetica-Bold').text(settings?.brand_name || 'Klassiq Grafikz', { align: 'center' })
-        doc.moveDown(0.2)
-        doc.fontSize(9).font('Helvetica').text('STATEMENT OF ACCOUNT', { align: 'center' })
-        doc.moveDown(0.3)
-        doc.fontSize(8).font('Helvetica').fillColor('#666666').text(`Account: ${maskAccount(settings?.account_number)} | Currency: NGN`, { align: 'center' })
-        doc.fillColor('#000000')
-        doc.moveDown(0.5)
+    function drawHeader() {
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#000000').text(settings?.brand_name || 'Klassiq Grafikz', { align: 'center' })
+      doc.moveDown(0.2)
+      doc.fontSize(9).font('Helvetica').text('STATEMENT OF ACCOUNT', { align: 'center' })
+      doc.moveDown(0.3)
+      doc.fontSize(8).font('Helvetica').fillColor('#666666').text(`Account: ${maskAccount(settings?.account_number)} | Currency: NGN`, { align: 'center' })
+      doc.fillColor('#000000')
+      doc.moveDown(0.5)
 
-        const periodStart = fmtDate(start)
-        const periodEnd = fmtDate(end)
-        const issueDate = fmtDate(new Date())
-        doc.fontSize(8).font('Helvetica').text(`Account Holder: ${settings?.business_name || 'BizStrives'}`, 40, doc.y)
-        doc.text(`Statement Period: ${periodStart} to ${periodEnd}`, 40, doc.y + 12)
-        doc.text(`Issue Date: ${issueDate}`, 40, doc.y + 24)
-        doc.moveDown(3)
-      }
+      const periodStart = fmtDate(start)
+      const periodEnd = fmtDate(end)
+      const issueDate = fmtDate(new Date())
+      doc.fontSize(8).font('Helvetica').text(`Account Holder: ${settings?.business_name || 'BizStrives'}`, 40, doc.y)
+      doc.text(`Statement Period: ${periodStart} to ${periodEnd}`, 40, doc.y + 12)
+      doc.text(`Issue Date: ${issueDate}`, 40, doc.y + 24)
+      doc.moveDown(3)
+    }
 
-      function drawSummaryBox() {
-        const boxTop = doc.y
-        const boxHeight = 80
-        const col1 = 40
-        const col2 = 220
-        const col3 = 400
+    function drawSummaryBox() {
+      const boxTop = doc.y
+      const boxHeight = 80
+      const col1 = 40
+      const col2 = 220
+      const col3 = 400
 
-        doc.rect(col1, boxTop, pageWidth, boxHeight).stroke('#cccccc')
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333')
-        doc.text('ACCOUNT SUMMARY', col1 + 10, boxTop + 8)
-        doc.fillColor('#000000')
-
-        doc.fontSize(8).font('Helvetica').fillColor('#666666')
-        doc.text('Opening Balance', col1 + 10, boxTop + 28)
-        doc.text('Total Lodgments (Cr)', col1 + 10, boxTop + 42)
-        doc.text('Total Withdrawals (Dr)', col1 + 10, boxTop + 56)
-        doc.fillColor('#000000')
-
-        doc.fontSize(9).font('Helvetica-Bold')
-        doc.text(fmtNairaFull(openingBalance), col2 + 10, boxTop + 28, { align: 'right', width: 150 })
-        doc.text(fmtNairaFull(incomeTotal), col2 + 10, boxTop + 42, { align: 'right', width: 150 })
-        doc.text(fmtNairaFull(expenseTotal), col2 + 10, boxTop + 56, { align: 'right', width: 150 })
-
-        doc.fontSize(8).font('Helvetica').fillColor('#666666')
-        doc.text('Closing Balance', col3 + 10, boxTop + 28)
-        doc.fillColor('#000000')
-        doc.fontSize(10).font('Helvetica-Bold').fillColor('#006600')
-        doc.text(fmtNairaFull(closingBalance), col3 + 10, boxTop + 28, { align: 'right', width: 150 })
-        doc.fillColor('#000000')
-
-        doc.y = boxTop + boxHeight + 10
-      }
-
-      function drawTableHeader() {
-        const headers = ['Txn Date', 'Value Date', 'Narration', 'Reference', 'Withdrawal (Dr)', 'Lodgment (Cr)', 'Balance']
-        let x = tableLeft
-        doc.rect(x, doc.y, pageWidth, 22).fill('#f0f0f0')
-        doc.fontSize(7).font('Helvetica-Bold').fillColor('#333333')
-        headers.forEach((h, i) => {
-          doc.text(h, x + 3, doc.y + 5, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left' })
-          x += colWidths[i]
-        })
-        doc.fillColor('#000000')
-        doc.y += 22
-      }
-
-      function drawRow(row, rowIdx, balance) {
-        if (doc.y > 740) {
-          doc.addPage()
-          drawTableHeader()
-        }
-
-        const isEven = rowIdx % 2 === 0
-        if (isEven) {
-          doc.rect(tableLeft, doc.y, pageWidth, 20).fill('#fafafa')
-        }
-
-        const txnDate = fmtDate(row.date)
-        const valueDate = fmtDate(row.date)
-        const narration = buildNarration(row.type, row.data)
-        const reference = buildReference(row.type, row.data, rowIdx)
-        const withdrawal = row.amount < 0 ? fmtNairaFull(Math.abs(row.amount)) : ''
-        const lodgment = row.amount > 0 ? fmtNairaFull(row.amount) : ''
-        const balanceStr = fmtNairaFull(balance)
-
-        let x = tableLeft
-        doc.fontSize(7).font('Helvetica').fillColor('#333333')
-        const values = [txnDate, valueDate, narration, reference, withdrawal, lodgment, balanceStr]
-        values.forEach((v, i) => {
-          doc.text(v, x + 3, doc.y + 4, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left' })
-          x += colWidths[i]
-        })
-        doc.fillColor('#000000')
-        doc.y += 20
-      }
-
-      drawHeader()
-      drawSummaryBox()
-      drawTableHeader()
-
-      let runningBalance = openingBalance
-      allTxns.forEach((txn, idx) => {
-        runningBalance += txn.amount
-        drawRow(txn, idx, runningBalance)
-      })
-
-      doc.moveDown(1)
-      doc.fontSize(7).font('Helvetica-Oblique').fillColor('#666666')
-      doc.text('This is a computer-generated statement. No signature required.', { align: 'center' })
-      doc.text(`Page 1 of 1 | Generated on ${fmtDate(new Date())} at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' })}`, { align: 'center' })
+      doc.rect(col1, boxTop, pageWidth, boxHeight).stroke('#cccccc')
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333')
+      doc.text('ACCOUNT SUMMARY', col1 + 10, boxTop + 8)
       doc.fillColor('#000000')
 
-      doc.end()
+      doc.fontSize(8).font('Helvetica').fillColor('#666666')
+      doc.text('Opening Balance', col1 + 10, boxTop + 28)
+      doc.text('Total Lodgments (Cr)', col1 + 10, boxTop + 42)
+      doc.text('Total Withdrawals (Dr)', col1 + 10, boxTop + 56)
+      doc.fillColor('#000000')
+
+      doc.fontSize(9).font('Helvetica-Bold')
+      doc.text(fmtNairaFull(openingBalance), col2 + 10, boxTop + 28, { align: 'right', width: 150 })
+      doc.text(fmtNairaFull(incomeTotal), col2 + 10, boxTop + 42, { align: 'right', width: 150 })
+      doc.text(fmtNairaFull(expenseTotal), col2 + 10, boxTop + 56, { align: 'right', width: 150 })
+
+      doc.fontSize(8).font('Helvetica').fillColor('#666666')
+      doc.text('Closing Balance', col3 + 10, boxTop + 28)
+      doc.fillColor('#000000')
+      doc.fontSize(10).font('Helvetica-Bold').fillColor('#006600')
+      doc.text(fmtNairaFull(closingBalance), col3 + 10, boxTop + 28, { align: 'right', width: 150 })
+      doc.fillColor('#000000')
+
+      doc.y = boxTop + boxHeight + 10
+    }
+
+    function drawTableHeader() {
+      const headers = ['Txn Date', 'Value Date', 'Narration', 'Reference', 'Withdrawal (Dr)', 'Lodgment (Cr)', 'Balance']
+      let x = tableLeft
+      doc.rect(x, doc.y, pageWidth, headerHeight).fill('#f0f0f0')
+      doc.fontSize(7).font('Helvetica-Bold').fillColor('#333333')
+      headers.forEach((h, i) => {
+        doc.text(h, x + 3, doc.y + 5, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left' })
+        x += colWidths[i]
+      })
+      doc.fillColor('#000000')
+      doc.y += headerHeight
+    }
+
+    function checkPageBreak(needRows = 1) {
+      if (doc.y + needRows * rowHeight > pageBottom) {
+        drawFooter()
+        doc.addPage()
+        pageCount++
+        drawHeader()
+        drawSummaryBox()
+        drawTableHeader()
+      }
+    }
+
+    function drawFooter() {
+      const bottomY = doc.page.height - 40
+      doc.fontSize(7).font('Helvetica-Oblique').fillColor('#666666')
+      doc.text('This is a computer-generated statement. No signature required.', 40, bottomY, { align: 'center', width: pageWidth })
+      doc.text(`Page ${pageCount} | Generated on ${fmtDate(new Date())} at ${fmtTime(new Date())}`, 40, bottomY + 12, { align: 'center', width: pageWidth })
+      doc.fillColor('#000000')
+    }
+
+    function drawRow(row, rowIdx, balance) {
+      checkPageBreak(1)
+
+      const isEven = rowIdx % 2 === 0
+      if (isEven) {
+        doc.rect(tableLeft, doc.y, pageWidth, rowHeight).fill('#fafafa')
+      }
+
+      const txnDate = fmtDate(row.date)
+      const valueDate = fmtDate(row.date)
+      const narration = buildNarration(row.type, row.data)
+      const reference = buildReference(row.type, row.data, rowIdx)
+      const withdrawal = row.amount < 0 ? fmtNairaFull(Math.abs(row.amount)) : ''
+      const lodgment = row.amount > 0 ? fmtNairaFull(row.amount) : ''
+      const balanceStr = fmtNairaFull(balance)
+
+      let x = tableLeft
+      doc.fontSize(7).font('Helvetica').fillColor('#333333')
+      const values = [txnDate, valueDate, narration, reference, withdrawal, lodgment, balanceStr]
+      values.forEach((v, i) => {
+        doc.text(v, x + 3, doc.y + 3, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left', ellipsis: true })
+        x += colWidths[i]
+      })
+      doc.fillColor('#000000')
+      doc.y += rowHeight
+    }
+
+    drawHeader()
+    drawSummaryBox()
+    drawTableHeader()
+
+    let runningBalance = openingBalance
+    allTxns.forEach((txn, idx) => {
+      runningBalance += txn.amount
+      drawRow(txn, idx, runningBalance)
     })
 
-    const pdfBuffer = Buffer.concat(chunks)
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="statement-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}.pdf"`
-    )
-    res.send(pdfBuffer)
+    drawFooter()
+
+    doc.end()
   } catch (err) {
     console.error('GET /reports/pdf error:', err)
     res.status(500).json({ error: 'Failed to generate PDF' })

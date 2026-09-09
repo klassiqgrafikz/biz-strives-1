@@ -36,7 +36,7 @@ export default function Settings() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword, gmail_client_secret: gmailClientSecret, account_number: settings.account_number })
+      await api.put('/settings', { ...settings, gmail_app_password: gmailAppPassword, gmail_client_secret: gmailClientSecret, account_number: settings.account_number, opening_balance_cents: settings.opening_balance_cents })
       setGmailAppPassword('')
       setGmailClientSecret('')
       setSaved(true)
@@ -122,6 +122,11 @@ export default function Settings() {
               <label className="block text-sm font-medium text-brand-muted mb-1">Account Number (for PDF statements)</label>
               <input name="account_number" value={settings.account_number || ''} onChange={handleChange} className="input" placeholder="e.g. 0123456789" />
               <p className="text-xs text-brand-muted">Shown masked on statements (**** **** **** 1234)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-brand-muted mb-1">Opening Balance (₦, for first statement)</label>
+              <input name="opening_balance_cents" type="number" step="100" min="0" value={settings.opening_balance_cents || 0} onChange={handleChange} className="input" placeholder="0" />
+              <p className="text-xs text-brand-muted">Set once for the very first statement. Leave 0 to auto-calculate from prior months.</p>
             </div>
           </div>
         </div>
