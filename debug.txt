@@ -1,1 +1,4 @@
-biz-strives-api.onrender.com/settings/test-email:1  Failed to load resource: the server responded with a status of 404 ()
+biz-strives-api.onrender.com/reports/pdf?month=2026-09:1  Failed to load resource: the server responded with a status of 500 ()
+index-BynPGwre.js:67 Error: Failed to download PDF
+    at u (index-BynPGwre.js:67:45592)
+u @ index-BynPGwre.js:67

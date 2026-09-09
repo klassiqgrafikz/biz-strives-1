@@ -17,6 +17,11 @@ function getMonthRange(date = new Date()) {
   return { start, end }
 }
 
+function dayOf(v) {
+  const d = v instanceof Date ? v : new Date(v)
+  return d.toLocaleString('en-CA', { timeZone: 'Africa/Lagos' }).slice(0, 10)
+}
+
 // GET /api/reports?month=YYYY-MM
 router.get('/', async (req, res) => {
   try {
@@ -119,7 +124,7 @@ router.get('/pdf', async (req, res) => {
       }
       payments.forEach(p => {
         doc.font('Helvetica').text(
-          `${p.received_at.split('T')[0]}  ${p.customer_name}  ${fmtNaira(p.amount_cents)}  ${p.method}  ${p.note || ''}`
+          `${dayOf(p.received_at)}  ${p.customer_name}  ${fmtNaira(p.amount_cents)}  ${p.method}  ${p.note || ''}`
         )
       })
       doc.moveDown(0.5)
@@ -133,7 +138,7 @@ router.get('/pdf', async (req, res) => {
       }
       expenses.forEach(e => {
         doc.font('Helvetica').text(
-          `${e.spent_at.split('T')[0]}  ${e.category}  ${fmtNaira(e.amount_cents)}  ${e.description || ''}`
+          `${dayOf(e.spent_at)}  ${e.category}  ${fmtNaira(e.amount_cents)}  ${e.description || ''}`
         )
       })
       doc.moveDown(0.5)
@@ -148,7 +153,7 @@ router.get('/pdf', async (req, res) => {
       savings.forEach(s => {
         const prefix = s.amount_cents >= 0 ? '+' : ''
         doc.font('Helvetica').text(
-          `${s.saved_at.split('T')[0]}  ${prefix}${fmtNaira(Math.abs(s.amount_cents))}  ${s.description || ''}`
+          `${dayOf(s.saved_at)}  ${prefix}${fmtNaira(Math.abs(s.amount_cents))}  ${s.description || ''}`
         )
       })
       doc.moveDown(0.5)
