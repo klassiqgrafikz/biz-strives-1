@@ -48,9 +48,9 @@ router.get('/', async (req, res) => {
       )
     ])
 
-    const incomeTotal = payments.reduce((s, p) => s + p.amount_cents, 0)
-    const expenseTotal = expenses.reduce((s, e) => s + e.amount_cents, 0)
-    const savingsTotal = savings.reduce((s, s_) => s + s_.amount_cents, 0)
+    const incomeTotal = payments.reduce((s, p) => s + Number(p.amount_cents), 0)
+    const expenseTotal = expenses.reduce((s, e) => s + Number(e.amount_cents), 0)
+    const savingsTotal = savings.reduce((s, s_) => s + Number(s_.amount_cents), 0)
     const net = incomeTotal - expenseTotal - savingsTotal
 
     res.json({
@@ -96,9 +96,9 @@ router.get('/pdf', async (req, res) => {
     ])
 
     const settings = await queryOne('SELECT * FROM settings WHERE id = 1')
-    const incomeTotal = payments.reduce((s, p) => s + p.amount_cents, 0)
-    const expenseTotal = expenses.reduce((s, e) => s + e.amount_cents, 0)
-    const savingsTotal = savings.reduce((s, s_) => s + s_.amount_cents, 0)
+    const incomeTotal = payments.reduce((s, p) => s + Number(p.amount_cents), 0)
+    const expenseTotal = expenses.reduce((s, e) => s + Number(e.amount_cents), 0)
+    const savingsTotal = savings.reduce((s, s_) => s + Number(s_.amount_cents), 0)
     const net = incomeTotal - expenseTotal - savingsTotal
 
     const doc = new PDFDocument({ margin: 50 })

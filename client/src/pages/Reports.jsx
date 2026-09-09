@@ -69,8 +69,7 @@ export default function Reports() {
                 const currentYear = new Date().getFullYear()
                 for (let y = currentYear; y >= 2020; y--) {
                   for (let m = 11; m >= 0; m--) {
-                    const date = new Date(y, m, 1)
-                    const value = date.toISOString().slice(0, 7)
+                    const value = `${y}-${String(m + 1).padStart(2, '0')}`
                     const label = months[m] + ' ' + y
                     opts.push(<option key={value} value={value}>{label}</option>)
                   }
