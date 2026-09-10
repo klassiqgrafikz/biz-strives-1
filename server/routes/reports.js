@@ -303,19 +303,33 @@ router.get('/pdf', async (req, res) => {
       doc.y += rowHeight
     }
 
-    drawHeader()
-    drawSummaryBox()
-    drawTableHeader()
+    await new Promise((resolve, reject) => {
+      doc.on('data', c => chunks.push(c))
+      doc.on('end', resolve)
+      doc.on('error', reject)
 
-    let runningBalance = openingBalance
-    allTxns.forEach((txn, idx) => {
-      runningBalance += txn.amount
-      drawRow(txn, idx, runningBalance)
+      drawHeader()
+      drawSummaryBox()
+      drawTableHeader()
+
+      let runningBalance = openingBalance
+      allTxns.forEach((txn, idx) => {
+        runningBalance += txn.amount
+        drawRow(txn, idx, runningBalance)
+      })
+
+      drawFooter()
+
+      doc.end()
     })
 
-    drawFooter()
-
-    doc.end()
+    const pdfBuffer = Buffer.concat(chunks)
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="statement-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}.pdf"`
+    )
+    res.send(pdfBuffer)
   } catch (err) {
     console.error('GET /reports/pdf error:', err)
     res.status(500).json({ error: 'Failed to generate PDF' })
