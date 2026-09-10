@@ -1,0 +1,10 @@
+# Gradle
+.gradle/
+build/
+app/build/
+local.properties
+*.log
+hs_err_pid*.log
+
+# Secrets
+app/android-keystore

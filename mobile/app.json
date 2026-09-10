@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Biz Strives",
+    "slug": "biz-strives",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#EC4899",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bizstrives.app"
+    },
+    "android": {
+      "package": "com.bizstrives.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#EC4899",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sharing",
+      "expo-web-browser",
+      "@react-native-vector-icons/material-design-icons"
+    ]
+  }
+}
