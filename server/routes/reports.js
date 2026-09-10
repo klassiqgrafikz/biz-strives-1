@@ -184,7 +184,7 @@ router.get('/pdf', async (req, res) => {
     const chunks = []
 
     const pageWidth = doc.page.width - 80
-    const colWidths = [55, 55, 120, 70, 65, 65, 65]
+    const colWidths = [52, 52, 140, 70, 66, 66, 69]
     const tableLeft = 40
     const rowHeight = 18
     const headerHeight = 22
@@ -193,100 +193,95 @@ router.get('/pdf', async (req, res) => {
 
     let pageCount = 1
 
-    function drawHeader() {
-      doc.fontSize(16).font('Helvetica-Bold').fillColor('#000000').text(settings?.brand_name || 'Klassiq Grafikz', { align: 'center' })
-      doc.moveDown(0.2)
-      doc.fontSize(9).font('Helvetica').text('STATEMENT OF ACCOUNT', { align: 'center' })
-      doc.moveDown(0.3)
-      doc.fontSize(8).font('Helvetica').fillColor('#666666').text(`Account: ${maskAccount(settings?.account_number)} | Currency: NGN`, { align: 'center' })
-      doc.fillColor('#000000')
-      doc.moveDown(0.5)
+    const clipText = (s, n = 30) => {
+      const t = String(s || '')
+      return t.length > n ? t.slice(0, n - 3).trimEnd() + '...' : t
+    }
 
-      const periodStart = fmtDate(start)
-      const periodEnd = fmtDate(end)
-      const issueDate = fmtDate(new Date())
-      doc.fontSize(8).font('Helvetica').text(`Account Holder: ${settings?.business_name || 'BizStrives'}`, 40, doc.y)
-      doc.text(`Statement Period: ${periodStart} to ${periodEnd}`, 40, doc.y + 12)
-      doc.text(`Issue Date: ${issueDate}`, 40, doc.y + 24)
-      doc.moveDown(3)
+    function drawHeader() {
+      const top = doc.y
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#000000').text(settings?.brand_name || 'Klassiq Grafikz', tableLeft, top, { align: 'center', width: pageWidth })
+      doc.fontSize(9).font('Helvetica').text('STATEMENT OF ACCOUNT', tableLeft, top + 22, { align: 'center', width: pageWidth })
+      doc.fontSize(8).font('Helvetica').fillColor('#666666').text(`Account: ${maskAccount(settings?.account_number)} | Currency: NGN`, tableLeft, top + 38, { align: 'center', width: pageWidth })
+      doc.fillColor('#000000')
+      doc.fontSize(8).font('Helvetica').text(`Account Holder: ${settings?.business_name || 'BizStrives'}`, tableLeft, top + 56)
+      doc.text(`Statement Period: ${fmtDate(start)} to ${fmtDate(end)}`, tableLeft, top + 68)
+      doc.text(`Issue Date: ${fmtDate(new Date())}`, tableLeft, top + 80)
+      doc.y = top + 96
     }
 
     function drawSummaryBox() {
       const boxTop = doc.y
       const boxHeight = 80
-      const col1 = 40
+      const right = tableLeft + pageWidth - 10
       const col2 = 220
       const col3 = 400
 
-      doc.rect(col1, boxTop, pageWidth, boxHeight).stroke('#cccccc')
+      doc.rect(tableLeft, boxTop, pageWidth, boxHeight).stroke('#cccccc')
       doc.fontSize(9).font('Helvetica-Bold').fillColor('#333333')
-      doc.text('ACCOUNT SUMMARY', col1 + 10, boxTop + 8)
+      doc.text('ACCOUNT SUMMARY', tableLeft + 10, boxTop + 8)
       doc.fillColor('#000000')
 
       doc.fontSize(8).font('Helvetica').fillColor('#666666')
-      doc.text('Opening Balance', col1 + 10, boxTop + 28)
-      doc.text('Total Lodgments (Cr)', col1 + 10, boxTop + 42)
-      doc.text('Total Withdrawals (Dr)', col1 + 10, boxTop + 56)
+      doc.text('Opening Balance', tableLeft + 10, boxTop + 28)
+      doc.text('Total Lodgments (Cr)', tableLeft + 10, boxTop + 42)
+      doc.text('Total Withdrawals (Dr)', tableLeft + 10, boxTop + 56)
       doc.fillColor('#000000')
 
       doc.fontSize(9).font('Helvetica-Bold')
-      doc.text(fmtNairaFull(openingBalance), col2 + 10, boxTop + 28, { align: 'right', width: 150 })
-      doc.text(fmtNairaFull(incomeTotal), col2 + 10, boxTop + 42, { align: 'right', width: 150 })
-      doc.text(fmtNairaFull(expenseTotal), col2 + 10, boxTop + 56, { align: 'right', width: 150 })
+      doc.text(fmtNairaFull(openingBalance), tableLeft + 10, boxTop + 28, { align: 'right', width: col2 - tableLeft - 10 })
+      doc.text(fmtNairaFull(incomeTotal), tableLeft + 10, boxTop + 42, { align: 'right', width: col2 - tableLeft - 10 })
+      doc.text(fmtNairaFull(expenseTotal), tableLeft + 10, boxTop + 56, { align: 'right', width: col2 - tableLeft - 10 })
 
       doc.fontSize(8).font('Helvetica').fillColor('#666666')
       doc.text('Closing Balance', col3 + 10, boxTop + 28)
       doc.fillColor('#000000')
       doc.fontSize(10).font('Helvetica-Bold').fillColor('#006600')
-      doc.text(fmtNairaFull(closingBalance), col3 + 10, boxTop + 28, { align: 'right', width: 150 })
+      doc.text(fmtNairaFull(closingBalance), col3 + 10, boxTop + 28, { align: 'right', width: right - col3 - 10 })
       doc.fillColor('#000000')
 
       doc.y = boxTop + boxHeight + 10
     }
 
     function drawTableHeader() {
+      const top = doc.y
       const headers = ['Txn Date', 'Value Date', 'Narration', 'Reference', 'Withdrawal (Dr)', 'Lodgment (Cr)', 'Balance']
-      let x = tableLeft
-      doc.rect(x, doc.y, pageWidth, headerHeight).fill('#f0f0f0')
+      doc.rect(tableLeft, top, pageWidth, headerHeight).fill('#f0f0f0')
       doc.fontSize(7).font('Helvetica-Bold').fillColor('#333333')
+      let x = tableLeft
       headers.forEach((h, i) => {
-        doc.text(h, x + 3, doc.y + 5, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left' })
+        doc.text(h, x + 3, top + 6, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left', lineBreak: false })
         x += colWidths[i]
       })
       doc.fillColor('#000000')
-      doc.y += headerHeight
-    }
-
-    function checkPageBreak(needRows = 1) {
-      if (doc.y + needRows * rowHeight > pageBottom) {
-        drawFooter()
-        doc.addPage()
-        pageCount++
-        drawHeader()
-        drawSummaryBox()
-        drawTableHeader()
-      }
+      doc.y = top + headerHeight
     }
 
     function drawFooter() {
-      const bottomY = doc.page.height - 40
+      const bottomY = doc.page.height - 40 - 24
       doc.fontSize(7).font('Helvetica-Oblique').fillColor('#666666')
-      doc.text('This is a computer-generated statement. No signature required.', 40, bottomY, { align: 'center', width: pageWidth })
-      doc.text(`Page ${pageCount} | Generated on ${fmtDate(new Date())} at ${fmtTime(new Date())}`, 40, bottomY + 12, { align: 'center', width: pageWidth })
+      doc.text('This is a computer-generated statement. No signature required.', tableLeft, bottomY - 12, { align: 'center', width: pageWidth })
+      doc.text(`Page ${pageCount} | Generated on ${fmtDate(new Date())} at ${fmtTime(new Date())}`, tableLeft, bottomY, { align: 'center', width: pageWidth })
       doc.fillColor('#000000')
     }
 
     function drawRow(row, rowIdx, balance) {
-      checkPageBreak(1)
+      if (doc.y + rowHeight > pageBottom) {
+        drawFooter()
+        doc.addPage()
+        pageCount++
+        drawHeader()
+        drawTableHeader()
+      }
 
-      const isEven = rowIdx % 2 === 0
-      if (isEven) {
-        doc.rect(tableLeft, doc.y, pageWidth, rowHeight).fill('#fafafa')
+      const rowTop = doc.y
+      if (rowIdx % 2 === 0) {
+        doc.rect(tableLeft, rowTop, pageWidth, rowHeight).fill('#fafafa')
       }
 
       const txnDate = fmtDate(row.date)
       const valueDate = fmtDate(row.date)
-      const narration = buildNarration(row.type, row.data)
+      const narration = clipText(buildNarration(row.type, row.data))
       const reference = buildReference(row.type, row.data, rowIdx)
       const withdrawal = row.amount < 0 ? fmtNairaFull(Math.abs(row.amount)) : ''
       const lodgment = row.amount > 0 ? fmtNairaFull(row.amount) : ''
@@ -296,11 +291,11 @@ router.get('/pdf', async (req, res) => {
       doc.fontSize(7).font('Helvetica').fillColor('#333333')
       const values = [txnDate, valueDate, narration, reference, withdrawal, lodgment, balanceStr]
       values.forEach((v, i) => {
-        doc.text(v, x + 3, doc.y + 3, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left' })
+        doc.text(v, x + 3, rowTop + 3, { width: colWidths[i] - 6, align: i >= 4 ? 'right' : 'left', lineBreak: false })
         x += colWidths[i]
       })
       doc.fillColor('#000000')
-      doc.y += rowHeight
+      doc.y = rowTop + rowHeight
     }
 
     await new Promise((resolve, reject) => {
