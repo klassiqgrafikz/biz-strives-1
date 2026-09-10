@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bizstrives.twa",
+      "sha256_cert_fingerprints": ["9B:0D:FC:C3:B9:1F:B0:29:2E:10:01:14:00:68:98:B6:68:58:2B:35:A0:6F:29:74:C6:0B:86:C9:E6:F2:9A:5B"]
+    }
+  }
+]
