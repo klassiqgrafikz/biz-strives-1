@@ -48,8 +48,11 @@ async function request(path, options = {}) {
   })
 
   if (res.status === 401) {
-    clearToken()
-    throw new Error('Unauthorized')
+    const body = await res.json().catch(() => null)
+    if (path !== '/auth/login') {
+      clearToken()
+    }
+    throw new Error(body?.error || 'Unauthorized')
   }
 
   if (!res.ok) {

@@ -51,7 +51,8 @@ router.get('/me', requireAuth, async (req, res) => {
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body
-    if (!username || !password || password.length < 6) {
+    const uname = typeof username === 'string' ? username.trim() : ''
+    if (!uname || !password || password.length < 6) {
       return res.status(400).json({ error: 'Username and password (min 6 chars) required' })
     }
 
@@ -63,7 +64,7 @@ router.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10)
     const user = await queryInsert(
       'INSERT INTO users (username, password_hash) VALUES ($1, $2)',
-      [username, hash]
+      [uname, hash]
     )
 
     const token = generateToken(user)
@@ -78,7 +79,8 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body
-    const user = await queryOne('SELECT * FROM users WHERE username = $1', [username])
+    const uname = typeof username === 'string' ? username.trim() : ''
+    const user = await queryOne('SELECT * FROM users WHERE LOWER(username) = LOWER($1)', [uname])
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ error: 'Invalid username or password' })
     }

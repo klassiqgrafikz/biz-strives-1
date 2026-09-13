@@ -16,7 +16,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(username, password)
+      await login(username.trim(), password)
       navigate('/dashboard')
     } catch (err) {
       setError(err.message)
