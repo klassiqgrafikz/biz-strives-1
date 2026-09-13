@@ -66,14 +66,14 @@ export default function Layout() {
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           } lg:translate-x-0`}
         >
-          <nav className="flex-1 py-2 overflow-y-auto">
+          <nav className="flex-1 py-3 px-3 overflow-y-auto space-y-0.5">
             {navItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl transition-colors ${
                   location.pathname === item.path
-                    ? 'bg-brand-pink text-white'
+                    ? 'bg-brand-pink text-white shadow-lift'
                     : 'text-brand-muted hover:text-brand-text hover:bg-brand-surface2'
                 }`}
               >

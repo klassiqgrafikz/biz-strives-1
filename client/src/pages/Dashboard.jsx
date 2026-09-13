@@ -110,7 +110,7 @@ export default function Dashboard() {
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-muted">Loading...</div>
-  if (error) return <div className="text-pink-500 p-4">Error: {error}</div>
+  if (error) return <div className="text-red-600 p-4">Error: {error}</div>
 
   return (
     <div className="space-y-6">
@@ -183,7 +183,7 @@ export default function Dashboard() {
                   <div className="flex items-center space-x-3">
                     <span className="text-brand-lime font-semibold">{fmtNaira(p.amount_cents)}</span>
                     <button onClick={() => openEdit(p)} className="text-xs text-brand-pink hover:underline">Edit</button>
-                    <button onClick={() => deletePayment(p)} className="text-xs text-pink-500 hover:underline">Delete</button>
+                    <button onClick={() => deletePayment(p)} className="text-xs text-red-500 hover:underline">Delete</button>
                   </div>
                 </div>
               ))
@@ -205,7 +205,7 @@ export default function Dashboard() {
                     <p className="font-medium">{e.category}</p>
                     <p className="text-sm text-brand-muted">{new Date(e.spent_at).toLocaleDateString()}{e.description ? ' · ' + e.description : ''}</p>
                   </div>
-                  <span className="text-pink-500 font-semibold">{fmtNaira(e.amount_cents)}</span>
+                  <span className="text-red-600 font-semibold">{fmtNaira(e.amount_cents)}</span>
                 </div>
               ))
             )}

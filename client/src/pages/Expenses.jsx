@@ -78,7 +78,7 @@ export default function Expenses() {
         <button onClick={openAdd} className="btn btn-danger">Add Expense</button>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <table className="w-full">
           <thead className="bg-brand-surface2 border-b border-brand-border">
             <tr>
@@ -95,10 +95,10 @@ export default function Expenses() {
                 <td className="px-4 py-3">{new Date(e.spent_at).toLocaleDateString()}</td>
                 <td className="px-4 py-3 font-medium">{e.category}</td>
                 <td className="px-4 py-3">{e.description || '-'}</td>
-                <td className="px-4 py-3 text-right text-pink-500 font-semibold">{fmtNaira(e.amount_cents)}</td>
+                <td className="px-4 py-3 text-right text-red-600 font-semibold">{fmtNaira(e.amount_cents)}</td>
                 <td className="px-4 py-3 text-right space-x-2">
-                  <button onClick={() => openEdit(e)} className="text-brand-pink hover:text-pink-400 text-sm">Edit</button>
-                  <button onClick={() => handleDelete(e.id)} className="text-pink-500 hover:text-pink-400 text-sm">Delete</button>
+                  <button onClick={() => openEdit(e)} className="text-brand-pink hover:text-brand-pinkDark text-sm">Edit</button>
+                  <button onClick={() => handleDelete(e.id)} className="text-red-500 hover:text-red-600 text-sm">Delete</button>
                 </td>
               </tr>
             ))}

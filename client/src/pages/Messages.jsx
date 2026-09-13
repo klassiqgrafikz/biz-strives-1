@@ -163,11 +163,11 @@ export default function Messages() {
                 <h3 className="font-medium">{t.name}</h3>
                 <p className="text-sm text-brand-muted mb-2">{t.subject}</p>
                 <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-0.5 text-xs rounded-full ${t.type === 'monthly' ? 'bg-brand-pink bg-opacity-20 text-pink-400' : 'bg-brand-lime bg-opacity-20 text-brand-lime'}`}>
+                  <span className={`px-2 py-0.5 text-xs rounded-full ${t.type === 'monthly' ? 'bg-brand-pinkSoft text-brand-pinkDark' : 'bg-brand-lime bg-opacity-20 text-brand-limeDark'}`}>
                     {t.type}
                   </span>
-                  <button onClick={() => openEdit(t)} className="text-sm text-brand-pink hover:underline">Edit</button>
-                  <button onClick={() => handleDelete(t.id)} className="text-sm text-pink-500 hover:underline">Delete</button>
+                  <button onClick={() => openEdit(t)} className="text-sm text-brand-pink hover:text-brand-pinkDark">Edit</button>
+                  <button onClick={() => handleDelete(t.id)} className="text-sm text-red-500 hover:text-red-600">Delete</button>
                 </div>
               </div>
             ))}
@@ -186,7 +186,7 @@ export default function Messages() {
           </div>
           <div className="p-4 space-y-3">
             <div className="bg-brand-pink bg-opacity-20 border border-brand-pink border-opacity-40 rounded-md p-3">
-              <p className="font-medium text-pink-400">Monthly Statement</p>
+              <p className="font-medium text-brand-pinkDark">Monthly Statement</p>
               <p className="text-sm text-brand-muted mt-1">
                 Emailed to your statement email on the last day of each month at 9pm, along with the monthly template to all active customers.
               </p>
@@ -198,12 +198,12 @@ export default function Messages() {
               </p>
             </div>
             <div className="bg-brand-surface2 border border-brand-border rounded-md p-3">
-              <p className="font-medium text-yellow-400">Savings Reminder</p>
+              <p className="font-medium text-amber-500">Savings Reminder</p>
               <p className="text-sm text-brand-muted mt-1">
                 Emailed every Friday at 6pm if no savings were recorded that week.
               </p>
             </div>
-            <a href="#" onClick={e => { e.preventDefault(); downloadPDF() }} className="block text-center bg-brand-lime text-gray-900 font-semibold py-2 px-4 rounded-md hover:bg-lime-300">
+            <a href="#" onClick={e => { e.preventDefault(); downloadPDF() }} className="block text-center bg-brand-lime text-white font-semibold py-2 px-4 rounded-md hover:bg-brand-limeDark">
               Download Current PDF Statement
             </a>
             <p className="text-xs text-brand-muted">
@@ -221,7 +221,7 @@ export default function Messages() {
                 if (!confirm('Delete all messages?')) return
                 await api.delete('/messages/log')
                 setLog([])
-              }} className="text-sm text-pink-500 hover:text-pink-400">Delete All</button>
+              }} className="text-sm text-red-500 hover:text-red-600">Delete All</button>
             )}
         </div>
         <div className="divide-y divide-brand-border">

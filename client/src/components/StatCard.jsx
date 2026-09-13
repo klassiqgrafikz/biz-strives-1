@@ -1,9 +1,11 @@
 export default function StatCard({ label, value, color = 'pink', icon }) {
   const colors = {
     pink: 'border-brand-pink text-brand-pink',
+    blue: 'border-brand-pink text-brand-pink',
     lime: 'border-brand-lime text-brand-lime',
-    red: 'border-pink-600 text-pink-500',
-    yellow: 'border-yellow-400 text-yellow-400'
+    green: 'border-brand-lime text-brand-lime',
+    red: 'border-red-500 text-red-600',
+    yellow: 'border-amber-400 text-amber-500'
   }
 
   return (

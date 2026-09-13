@@ -89,7 +89,7 @@ export default function Payments() {
         <button onClick={openAdd} className="btn btn-primary">Record Payment</button>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <table className="w-full">
           <thead className="bg-brand-surface2 border-b border-brand-border">
             <tr>
@@ -110,8 +110,8 @@ export default function Payments() {
                 <td className="px-4 py-3">{p.method}</td>
                 <td className="px-4 py-3">{p.note || '-'}</td>
                 <td className="px-4 py-3 text-right space-x-2">
-                  <button onClick={() => openEdit(p)} className="text-brand-pink hover:text-pink-400 text-sm">Edit</button>
-                  <button onClick={() => handleDelete(p.id)} className="text-pink-500 hover:text-pink-400 text-sm">Delete</button>
+                  <button onClick={() => openEdit(p)} className="text-brand-pink hover:text-brand-pinkDark text-sm">Edit</button>
+                  <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-600 text-sm">Delete</button>
                 </td>
               </tr>
             ))}

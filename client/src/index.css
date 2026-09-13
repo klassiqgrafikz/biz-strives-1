@@ -3,38 +3,38 @@
 @tailwind utilities;
 
 body {
-  background-color: #0a0a0f;
+  background-color: #f4f6fb;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-md font-semibold transition-colors;
+    @apply px-4 py-2 rounded-lg font-semibold transition-colors;
   }
   .btn-primary {
-    @apply bg-brand-pink text-white hover:bg-pink-400;
+    @apply bg-brand-pink text-white hover:bg-brand-pinkDark shadow-sm;
   }
   .btn-cta {
-    @apply bg-brand-lime text-gray-900 hover:bg-lime-300;
+    @apply bg-brand-lime text-white hover:bg-brand-limeDark shadow-sm;
   }
   .btn-danger {
-    @apply bg-pink-600 text-white hover:bg-pink-700;
+    @apply bg-red-600 text-white hover:bg-red-700;
   }
   .btn-secondary {
     @apply bg-brand-surface2 text-brand-text hover:bg-brand-border;
   }
   .input {
-    @apply w-full px-3 py-2 border border-brand-border rounded-md bg-brand-surface text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-pink focus:border-brand-pink;
+    @apply w-full px-3 py-2 border border-brand-border rounded-lg bg-white text-brand-text placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-pink focus:border-brand-pink;
   }
   .card {
-    @apply bg-brand-surface rounded-lg border border-brand-border shadow;
+    @apply bg-brand-surface rounded-xl border border-brand-border shadow-card;
   }
 }
 
 /* ContentEditable placeholder */
 [contenteditable]:empty::before {
   content: attr(data-placeholder);
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(15, 23, 42, 0.3);
   pointer-events: none;
 }
 

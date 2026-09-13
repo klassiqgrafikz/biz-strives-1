@@ -127,8 +127,8 @@ export default function Notifications() {
       <p className="text-sm text-brand-muted">Send a custom email message directly to your customers. Select recipients, compose your message below, and send it.</p>
 
       {result && (
-        <div className={`border rounded-md p-4 ${result.failed > 0 ? 'bg-yellow-500 bg-opacity-10 border-yellow-500' : 'bg-brand-lime bg-opacity-10 border-brand-lime'}`}>
-          <p className={`font-medium ${result.failed > 0 ? 'text-yellow-400' : 'text-brand-lime'}`}>
+        <div className={`border rounded-md p-4 ${result.failed > 0 ? 'bg-amber-50 border-amber-300' : 'bg-brand-lime bg-opacity-10 border-brand-lime'}`}>
+          <p className={`font-medium ${result.failed > 0 ? 'text-amber-600' : 'text-brand-lime'}`}>
             {result.sent} sent{result.failed > 0 ? `, ${result.failed} failed` : ''}
           </p>
           {result.failures?.length > 0 && (
@@ -165,7 +165,7 @@ export default function Notifications() {
                       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="hidden" />
                     </label>
                     {imagePreview && (
-                      <button type="button" onClick={removeImage} className="btn btn-ghost text-pink-500 hover:bg-pink-500 hover:bg-opacity-10" title="Remove image">
+                      <button type="button" onClick={removeImage} className="btn btn-ghost text-red-500 hover:bg-red-50" title="Remove image">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                       </button>
                     )}
@@ -224,14 +224,14 @@ export default function Notifications() {
                   <div
                     ref={editorRef}
                     contentEditable
-                    className="min-h-[220px] p-3 focus:outline-none prose prose-invert max-w-none text-sm"
+                    className="min-h-[220px] p-3 focus:outline-none prose max-w-none text-sm"
                     data-placeholder="Write your message here..."
                     suppressContentEditableWarning={true}
                     onFocus={e => {
                       if (e.currentTarget.innerHTML === '<br>') e.currentTarget.innerHTML = ''
                     }}
                     style={{
-                      color: 'var(--brand-text, #e5e7eb)'
+                      color: 'var(--brand-text, #1e293b)'
                     }}
                   />
                 </div>
@@ -269,8 +269,8 @@ export default function Notifications() {
                     className="h-4 w-4 text-brand-pink rounded"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{c.name}</p>
-                    <p className="text-xs text-brand-muted truncate">{c.email}</p>
+                    <p className="font-medium text-sm break-words">{c.name}</p>
+                    <p className="text-xs text-brand-muted break-words">{c.email}</p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${c.active ? 'bg-brand-lime bg-opacity-20 text-brand-lime' : 'bg-brand-surface2 text-brand-muted'}`}>
                     {c.active ? 'Active' : 'Inactive'}

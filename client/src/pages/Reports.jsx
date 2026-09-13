@@ -85,6 +85,7 @@ export default function Reports() {
             <div>
               <h2 className="text-lg font-semibold mb-3">Income Received</h2>
               <p className="text-3xl font-bold text-brand-lime mb-2">{fmtNaira(data.incomeTotal)}</p>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-brand-border">
@@ -104,14 +105,15 @@ export default function Reports() {
                 </tbody>
               </table>
               {data.payments.length > 10 && <p className="text-xs text-brand-muted mt-2">Showing 10 of {data.payments.length} payments</p>}
+              </div>
             </div>
 
             <div>
               <h2 className="text-lg font-semibold mb-3">Spending & Savings</h2>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-brand-pink bg-opacity-20 rounded">
+                <div className="flex justify-between items-center p-3 bg-red-50 rounded">
                   <span className="font-medium">Total Expenses</span>
-                  <span className="text-pink-400 font-semibold">{fmtNaira(data.expenseTotal)}</span>
+                  <span className="text-red-600 font-semibold">{fmtNaira(data.expenseTotal)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-brand-lime bg-opacity-20 rounded">
                   <span className="font-medium">Total Savings</span>
@@ -119,7 +121,7 @@ export default function Reports() {
                 </div>
                 <div className="flex justify-between items-center p-3 bg-brand-surface2 rounded border-l-4 border-brand-pink">
                   <span className="font-medium">Net Cash Flow</span>
-                  <span className={`font-semibold ${data.net >= 0 ? 'text-brand-lime' : 'text-pink-500'}`}>{fmtNaira(data.net)}</span>
+                  <span className={`font-semibold ${data.net >= 0 ? 'text-brand-lime' : 'text-red-600'}`}>{fmtNaira(data.net)}</span>
                 </div>
               </div>
             </div>
@@ -128,6 +130,7 @@ export default function Reports() {
           {data.expenses.length > 0 && (
             <div className="mt-6">
               <h3 className="text-md font-semibold mb-3">Expenses Detail</h3>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-brand-border">
@@ -148,12 +151,14 @@ export default function Reports() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 
           {data.savings.length > 0 && (
             <div className="mt-6">
               <h3 className="text-md font-semibold mb-3">Savings Detail</h3>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-brand-border">
@@ -167,13 +172,14 @@ export default function Reports() {
                     <tr key={s.id} className="border-b border-brand-border">
                       <td className="py-2">{new Date(s.saved_at).toLocaleDateString()}</td>
                       <td className="py-2">{s.description || '-'}</td>
-                      <td className={`py-2 text-right ${s.amount_cents >= 0 ? 'text-brand-lime' : 'text-pink-500'}`}>
+                      <td className={`py-2 text-right ${s.amount_cents >= 0 ? 'text-brand-lime' : 'text-red-600'}`}>
                         {s.amount_cents >= 0 ? '+' : ''}{fmtNaira(Math.abs(s.amount_cents))}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

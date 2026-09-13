@@ -30,7 +30,7 @@ export default function Register() {
         <div className="bg-brand-surface rounded-lg border border-brand-border shadow-md p-8">
         <h1 className="text-2xl font-bold text-center mb-2">Create Admin <span className="text-brand-pink">Account</span></h1>
         <p className="text-brand-muted text-center mb-6">First-time setup</p>
-        {error && <div className="bg-pink-600 bg-opacity-20 border border-brand-pink text-pink-400 px-4 py-3 rounded mb-4">{error}</div>}
+        {error && <div className="bg-red-50 border border-red-300 text-red-600 px-4 py-3 rounded-lg mb-4">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-muted mb-1">Username</label>

@@ -82,7 +82,7 @@ export default function Savings() {
         <button onClick={openWithdraw} className="btn btn-danger">Withdraw</button>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <div className="p-4 border-b border-brand-border">
           <h2 className="text-lg font-semibold">Savings History</h2>
         </div>
@@ -100,11 +100,11 @@ export default function Savings() {
             {entries.map(e => (
               <tr key={e.id} className="hover:bg-brand-surface2">
                 <td className="px-4 py-3">{new Date(e.saved_at).toLocaleDateString()}</td>
-                <td className={`px-4 py-3 ${e.amount_cents >= 0 ? 'text-brand-lime' : 'text-pink-500'}`}>
+                <td className={`px-4 py-3 ${e.amount_cents >= 0 ? 'text-brand-lime' : 'text-red-600'}`}>
                   {e.amount_cents >= 0 ? 'Deposit' : 'Withdrawal'}
                 </td>
                 <td className="px-4 py-3">{e.description || '-'}</td>
-                <td className={`px-4 py-3 text-right ${e.amount_cents >= 0 ? 'text-brand-lime' : 'text-pink-500'}`}>
+                <td className={`px-4 py-3 text-right ${e.amount_cents >= 0 ? 'text-brand-lime' : 'text-red-600'}`}>
                   {e.amount_cents >= 0 ? '+' : ''}{fmtNaira(Math.abs(e.amount_cents))}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -114,7 +114,7 @@ export default function Savings() {
                         api.delete(`/savings/${e.id}`).then(loadSavings).catch(alert)
                       }
                     }}
-                    className="text-pink-500 hover:text-pink-400 text-sm"
+                    className="text-red-500 hover:text-red-600 text-sm"
                   >
                     Delete
                   </button>
@@ -157,7 +157,7 @@ export default function Savings() {
         action={<button type="submit" form="withdrawForm" className="btn btn-danger">Withdraw</button>}
       >
         <div className="bg-brand-pink bg-opacity-20 p-3 rounded-md mb-3">
-          <p className="text-sm text-pink-400">Current Balance: {fmtNaira(balance)}</p>
+          <p className="text-sm text-brand-pinkDark">Current Balance: {fmtNaira(balance)}</p>
         </div>
         <form id="withdrawForm" onSubmit={handleWithdraw} className="space-y-4">
           <div>

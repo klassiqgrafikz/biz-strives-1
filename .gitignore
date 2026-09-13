@@ -1,4 +1,7 @@
 node_modules/
 *.db
 .env
-client/dist/BizStrives.apk
+BizStrives.apk
+client/dist/
+.vercel
+.env*

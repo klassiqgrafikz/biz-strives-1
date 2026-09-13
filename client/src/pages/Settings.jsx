@@ -173,7 +173,7 @@ export default function Settings() {
                 {testing ? 'Sending test...' : 'Send Test Email'}
               </button>
               {testResult && (
-                <p className={`mt-2 text-sm ${testResult.ok ? 'text-brand-lime' : 'text-pink-500'}`}>
+                <p className={`mt-2 text-sm ${testResult.ok ? 'text-brand-lime' : 'text-red-600'}`}>
                   {testResult.ok ? '✓ ' + testResult.message : '✗ ' + testResult.message}
                 </p>
               )}
@@ -193,8 +193,8 @@ export default function Settings() {
                 </p>
               </div>
             ) : (
-              <div className="bg-brand-pink bg-opacity-20 border border-brand-pink border-opacity-40 rounded-md p-3">
-                <p className="text-sm text-pink-400">
+              <div className="bg-brand-pinkSoft border border-brand-pink border-opacity-40 rounded-md p-3">
+                <p className="text-sm text-brand-pinkDark">
                   <span className="font-medium">SMTP is blocked on Render's free tier</span> (both ports 587 and 465 time out). Connecting the Gmail API fixes this permanently. You need a Google Cloud project with the Gmail API enabled and an OAuth Client ID (Web application).
                 </p>
               </div>
@@ -235,7 +235,7 @@ export default function Settings() {
                 {connecting ? 'Waiting for authorization...' : 'Connect Gmail API'}
               </button>
               {testResult && (
-                <p className={`text-sm ${testResult.ok ? 'text-brand-lime' : 'text-pink-500'}`}>
+                <p className={`text-sm ${testResult.ok ? 'text-brand-lime' : 'text-red-600'}`}>
                   {testResult.ok ? '✓ ' + testResult.message : '✗ ' + testResult.message}
                 </p>
               )}
@@ -268,8 +268,8 @@ export default function Settings() {
                 <p className="text-xs text-brand-muted mt-1">Last day of month at this time</p>
               </div>
             </div>
-            <div className="bg-brand-pink bg-opacity-20 border border-brand-pink border-opacity-40 rounded-md p-3">
-              <p className="text-sm text-pink-400">
+            <div className="bg-brand-pinkSoft border border-brand-pink border-opacity-40 rounded-md p-3">
+              <p className="text-sm text-brand-pinkDark">
                 <span className="font-medium">Automated emails:</span> monthly statement (income − expenses) is sent to your Statement Email on the last day of each month, and a savings reminder is sent every Friday if no savings were recorded that week. Set your Gmail details above to enable these.
               </p>
             </div>
